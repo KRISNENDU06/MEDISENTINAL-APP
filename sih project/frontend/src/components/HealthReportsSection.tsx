@@ -333,3 +333,4 @@ export const HealthReportsSection: React.FC<HealthReportsSectionProps> = ({
     </div>
   );
 };
+

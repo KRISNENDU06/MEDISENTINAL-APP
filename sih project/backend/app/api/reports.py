@@ -161,3 +161,4 @@ def _format_report(report: HealthReport, area: Area | None) -> dict[str, Any]:
         "is_public": report.is_public,
         "created_at": report.created_at,
     }
+
