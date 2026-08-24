@@ -446,4 +446,5 @@ export interface Facility {
   operatingHours?: string;
   services: string[];
   verifiedStock: string;
+  mapsQuery?: string;
 }
