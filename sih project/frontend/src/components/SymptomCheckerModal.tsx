@@ -292,3 +292,4 @@ export const SymptomCheckerModal: React.FC<SymptomCheckerModalProps> = ({ isOpen
     </div>
   );
 };
+
