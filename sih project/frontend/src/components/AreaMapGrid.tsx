@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { AreaSummary } from '../services/api';
 import { RealWorldSurveillanceMap } from './RealWorldSurveillanceMap';
 import {
@@ -13,6 +13,8 @@ import {
   Grid,
   RotateCcw,
   CheckCircle2,
+  Search,
+  Filter,
 } from 'lucide-react';
 
 interface AreaMapGridProps {
@@ -29,6 +31,31 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
   loading,
 }) => {
   const [viewMode, setViewMode] = useState<'map' | 'grid'>('map');
+  const [selectedDistrict, setSelectedDistrict] = useState<string>('ALL');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
+  // Extract unique sorted districts
+  const distinctDistricts = useMemo(() => {
+    const set = new Set<string>();
+    areas.forEach((a) => {
+      if (a.district) set.add(a.district);
+    });
+    return Array.from(set).sort();
+  }, [areas]);
+
+  // Filtered areas based on district and search query
+  const filteredAreas = useMemo(() => {
+    return areas.filter((a) => {
+      const matchesDistrict =
+        selectedDistrict === 'ALL' ||
+        a.district.toLowerCase() === selectedDistrict.toLowerCase();
+      const matchesSearch =
+        !searchQuery.trim() ||
+        a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        a.district.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesDistrict && matchesSearch;
+    });
+  }, [areas, selectedDistrict, searchQuery]);
 
   const getRiskBorder = (level: string) => {
     switch (level) {
@@ -55,27 +82,49 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
   return (
     <div className="space-y-4">
       {/* Header & Return / View Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
           <h3 className="text-base font-bold text-white flex items-center gap-2">
             <MapPin className="w-4 h-4 text-brand-400" />
             Geospatial Ward Surveillance Model
           </h3>
           <p className="text-xs text-slate-400">
-            Real-world geographic telemetry mapping across Odisha pilot wards with spatial transmission tracking
+            Real-world geographic telemetry mapping across all 30 districts & sub-divisions of Odisha
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          {selectedArea && (
-            <button
-              onClick={() => onSelectArea(areas[0])}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-300 bg-slate-850 hover:bg-slate-800 border border-slate-700 transition-colors"
+        <div className="flex flex-wrap items-center gap-2">
+          {/* District Dropdown Selector */}
+          <div className="flex items-center gap-1 bg-slate-950 px-2.5 py-1.5 rounded-xl border border-slate-800 text-xs">
+            <Filter className="w-3.5 h-3.5 text-brand-400" />
+            <select
+              value={selectedDistrict}
+              onChange={(e) => setSelectedDistrict(e.target.value)}
+              aria-label="Filter by District"
+              className="bg-transparent text-slate-200 font-semibold focus:outline-none cursor-pointer text-xs"
             >
-              <RotateCcw className="w-3 h-3 text-brand-400" />
-              <span>Reset Selected Ward</span>
-            </button>
-          )}
+              <option value="ALL" className="bg-slate-900 text-white">
+                All 30 Districts ({areas.length} Locations)
+              </option>
+              {distinctDistricts.map((d) => (
+                <option key={d} value={d} className="bg-slate-900 text-white">
+                  {d} ({areas.filter((a) => a.district === d).length})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Quick Search Bar */}
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search ward/locality..."
+              className="bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 w-36 sm:w-48 transition-all"
+            />
+          </div>
 
           {/* View Mode Toggle: Real-World Map vs Grid */}
           <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800">
@@ -88,7 +137,7 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
               }`}
             >
               <Globe className="w-3.5 h-3.5" />
-              <span>Real-World Map</span>
+              <span>Map View</span>
             </button>
             <button
               onClick={() => setViewMode('grid')}
@@ -99,7 +148,7 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
               }`}
             >
               <Grid className="w-3.5 h-3.5" />
-              <span>Ward Cards</span>
+              <span>Ward Cards ({filteredAreas.length})</span>
             </button>
           </div>
         </div>
@@ -111,7 +160,7 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
           {/* Left / Main: Real-World Leaflet Map */}
           <div className="lg:col-span-8">
             <RealWorldSurveillanceMap
-              areas={areas}
+              areas={filteredAreas}
               selectedArea={selectedArea}
               onSelectArea={onSelectArea}
             />
@@ -203,67 +252,74 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
         </div>
       ) : (
         /* Grid Cards View */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5">
-          {areas.map((area) => {
-            const isSelected = selectedArea?.id === area.id;
-            return (
-              <div
-                key={area.id}
-                onClick={() => onSelectArea(area)}
-                className={`glass-panel rounded-2xl p-4 cursor-pointer transition-all duration-200 border relative overflow-hidden flex flex-col justify-between min-h-[170px] ${
-                  isSelected ? 'ring-2 ring-brand-500 shadow-lg shadow-emerald-950/30' : ''
-                } ${getRiskBorder(area.riskLevel)}`}
-              >
-                <div>
-                  <div className="flex items-start justify-between gap-1 mb-2">
-                    <span className="text-[10px] font-mono text-slate-400 truncate">
-                      {area.district}
-                    </span>
-                    <span
-                      className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full border ${getRiskBadge(
-                        area.riskLevel
-                      )}`}
-                    >
-                      {area.riskLevel}
-                    </span>
+        filteredAreas.length === 0 ? (
+          <div className="py-12 text-center glass-panel rounded-2xl border border-slate-800 text-slate-400">
+            <MapPin className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+            <p className="text-sm font-semibold">No surveillance locations found</p>
+            <p className="text-xs text-slate-500">Try adjusting your district filter or search keywords.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
+            {filteredAreas.map((area) => {
+              const isSelected = selectedArea?.id === area.id;
+              return (
+                <div
+                  key={area.id}
+                  onClick={() => onSelectArea(area)}
+                  className={`glass-panel rounded-2xl p-4 cursor-pointer transition-all duration-200 border relative overflow-hidden flex flex-col justify-between min-h-[170px] ${
+                    isSelected ? 'ring-2 ring-brand-500 shadow-lg shadow-emerald-950/30' : ''
+                  } ${getRiskBorder(area.riskLevel)}`}
+                >
+                  <div>
+                    <div className="flex items-start justify-between gap-1 mb-2">
+                      <span className="text-[10px] font-mono text-slate-400 truncate">
+                        {area.district}
+                      </span>
+                      <span
+                        className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full border ${getRiskBadge(
+                          area.riskLevel
+                        )}`}
+                      >
+                        {area.riskLevel}
+                      </span>
+                    </div>
+
+                    <h4 className="text-sm font-bold text-white leading-snug line-clamp-1">
+                      {area.name}
+                    </h4>
+
+                    {/* Mini Spark Indicator */}
+                    <div className="mt-3 flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-800/80">
+                      <span>Composite Risk</span>
+                      <span className="font-bold text-white font-mono">{area.riskScore}/100</span>
+                    </div>
                   </div>
 
-                  <h4 className="text-sm font-bold text-white leading-snug line-clamp-1">
-                    {area.name}
-                  </h4>
-
-                  <div className="flex items-baseline gap-1.5 my-2">
-                    <span className="text-2xl font-black text-white font-mono">
-                      {area.riskScore}
-                    </span>
-                    <span className="text-xs text-slate-400">/ 100</span>
+                  <div className="space-y-1 pt-2 border-t border-slate-800/80 text-[11px]">
+                    <div className="flex items-center justify-between text-slate-400">
+                      <span className="flex items-center gap-1">
+                        <Pill className="w-3 h-3 text-brand-400" />
+                        Meds Spike:
+                      </span>
+                      <span className="font-bold text-white">
+                        {area.signals?.medicineDemand?.deviation || '+0%'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-slate-400">
+                      <span className="flex items-center gap-1">
+                        <Thermometer className="w-3 h-3 text-rose-400" />
+                        Fever Spike:
+                      </span>
+                      <span className="font-bold text-white">
+                        {area.signals?.feverIndicators?.deviation || '+0%'}
+                      </span>
+                    </div>
                   </div>
                 </div>
-
-                <div className="space-y-1 pt-2 border-t border-slate-800/80 text-[11px]">
-                  <div className="flex items-center justify-between text-slate-400">
-                    <span className="flex items-center gap-1">
-                      <Pill className="w-3 h-3 text-brand-400" />
-                      Meds Spike:
-                    </span>
-                    <span className="font-bold text-white">
-                      {area.signals?.medicineDemand?.deviation || '+0%'}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-slate-400">
-                    <span className="flex items-center gap-1">
-                      <Thermometer className="w-3 h-3 text-rose-400" />
-                      Fever Spike:
-                    </span>
-                    <span className="font-bold text-white">
-                      {area.signals?.feverIndicators?.deviation || '+0%'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )
       )}
     </div>
   );
