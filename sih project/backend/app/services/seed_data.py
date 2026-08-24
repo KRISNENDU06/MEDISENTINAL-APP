@@ -11,11 +11,17 @@ from app.services.risk_engine import RiskEngine
 
 
 AREAS = [
-    ("Area A (Saheed Nagar)", "Bhubaneswar", 20.2961, 85.8245),
-    ("Area B (Patia)", "Bhubaneswar", 20.3588, 85.8164),
-    ("Area C (CDA Sector 6)", "Cuttack", 20.4625, 85.8830),
+    ("Area A (Saheed Nagar)", "Bhubaneswar", 20.2883, 85.8456),
+    ("Area B (Patia)", "Bhubaneswar", 20.3588, 85.8166),
+    ("Area C (CDA Sector 6)", "Cuttack", 20.4789, 85.8364),
     ("Area D (Grand Road)", "Puri", 19.8135, 85.8312),
-    ("Area E (Industrial Estate)", "Khurda", 20.1859, 85.6277),
+    ("Area E (Industrial Estate)", "Khurda", 20.1834, 85.6179),
+    ("Angul Town Ward 8", "Angul", 20.8444, 85.1511),
+    ("Talcher Coalfield & Thermal Ward", "Angul", 20.9500, 85.2167),
+    ("Pallahara CHC Sub-Division", "Angul", 21.4333, 85.1833),
+    ("Khalari Rural PHC Ward", "Angul", 20.9333, 85.1000),
+    ("Dumduma Ward 62", "Bhubaneswar", 20.2450, 85.7860),
+    ("Nayapalli IRC Village", "Bhubaneswar", 20.2980, 85.8180),
 ]
 
 DEMO_USERS = [

@@ -22,7 +22,7 @@ interface RealWorldSurveillanceMapProps {
   onSelectArea: (area: AreaSummary) => void;
 }
 
-// 1. Comprehensive Geocoding Table for all 30 Districts & Major Pilot Hubs in Odisha
+// 1. Comprehensive High-Precision Geocoding Table for all Districts, Sub-Divisions & Wards in Odisha
 const ODISHA_GEO_COORDS: Record<string, [number, number]> = {
   // Pilot Wards
   'area-1': [20.2883, 85.8456], // Saheed Nagar, Bhubaneswar
@@ -31,86 +31,289 @@ const ODISHA_GEO_COORDS: Record<string, [number, number]> = {
   'area-4': [19.8135, 85.8312], // Grand Road, Puri
   'area-5': [20.1834, 85.6179], // Industrial Estate, Khurda
 
-  // All 30 Districts & Major Towns
+  // 1. Angul District Sub-Locations & Blocks
+  pallahara: [21.4333, 85.1833],
+  pallahada: [21.4333, 85.1833],
+  'pal lahara': [21.4333, 85.1833],
+  khalari: [20.9333, 85.1000],
+  khulari: [20.9333, 85.1000],
+  talcher: [20.9500, 85.2167],
+  kaniha: [21.0833, 85.0667],
+  'ntpc kaniha': [21.0833, 85.0667],
+  athmallik: [20.7167, 84.5333],
+  athamallik: [20.7167, 84.5333],
+  chhendipada: [21.0833, 84.8667],
+  bantala: [20.7333, 85.0167],
+  'nalco nagar': [20.8500, 85.1800],
+  khamar: [21.3167, 85.1667],
+  kishorenagar: [20.8833, 84.5833],
   angul: [20.8444, 85.1511],
   anugul: [20.8444, 85.1511],
-  sambalpur: [21.4669, 83.9812],
-  rourkela: [22.2604, 84.8536],
-  sundargarh: [22.1200, 84.0300],
-  sundergarh: [22.1200, 84.0300],
-  balasore: [21.4934, 86.9135],
-  baleswar: [21.4934, 86.9135],
-  berhampur: [19.3149, 84.7941],
-  ganjam: [19.3800, 85.0500],
-  puri: [19.8135, 85.8312],
-  cuttack: [20.4625, 85.8828],
-  bhubaneswar: [20.2961, 85.8245],
+
+  // 2. Bhubaneswar & Khordha Localities & Wards
+  dumduma: [20.2450, 85.7860],
+  dumuduma: [20.2450, 85.7860],
   'saheed nagar': [20.2883, 85.8456],
   patia: [20.3588, 85.8166],
+  nayapalli: [20.2980, 85.8180],
+  'irc village': [20.3050, 85.8250],
+  chandrasekharpur: [20.3240, 85.8180],
+  'cs pur': [20.3240, 85.8180],
+  khandagiri: [20.2600, 85.7870],
+  jagamara: [20.2580, 85.7920],
+  'old town': [20.2400, 85.8330],
+  lingaraj: [20.2400, 85.8330],
+  rasulgarh: [20.2950, 85.8650],
+  mancheswar: [20.3300, 85.8500],
+  baramunda: [20.2780, 85.7950],
+  'kalinga nagar': [20.2700, 85.7500],
+  ghatikia: [20.2750, 85.7650],
+  'jaydev vihar': [20.3000, 85.8200],
+  jatni: [20.1600, 85.7000],
   khurda: [20.1834, 85.6179],
   khordha: [20.1834, 85.6179],
-  koraput: [18.8135, 82.7123],
-  jharsuguda: [21.8554, 84.0062],
+  bhubaneswar: [20.2961, 85.8245],
+
+  // 3. Cuttack Localities & Sub-Divisions
+  'cda sector': [20.4789, 85.8364],
+  cda: [20.4789, 85.8364],
+  badambadi: [20.4500, 85.8750],
+  choudwar: [20.5333, 85.9167],
+  jagatpur: [20.5000, 85.9300],
+  'buxi bazaar': [20.4630, 85.8750],
+  mangalabag: [20.4700, 85.8900],
+  'scb medical': [20.4700, 85.8900],
+  'college square': [20.4600, 85.8950],
+  chauliaganj: [20.4650, 85.9050],
+  athagarh: [20.5167, 85.6333],
+  banki: [20.3800, 85.5300],
+  cuttack: [20.4625, 85.8828],
+
+  // 4. Puri Localities & Sub-Divisions
+  'grand road': [19.8135, 85.8312],
+  'bada danda': [19.8135, 85.8312],
+  'sea beach': [19.7980, 85.8250],
+  konark: [19.8876, 86.0945],
+  pipili: [20.1167, 85.8333],
+  satyabadi: [19.9500, 85.8200],
+  sakshigopal: [19.9500, 85.8200],
+  nimapada: [20.0800, 86.0100],
+  brahmagiri: [19.8000, 85.6500],
+  astaranga: [19.9800, 86.2600],
+  puri: [19.8135, 85.8312],
+
+  // 5. Sundargarh / Rourkela Sub-Locations
+  rourkela: [22.2604, 84.8536],
+  panposh: [22.2400, 84.8300],
+  uditnagar: [22.2400, 84.8300],
+  chhend: [22.2450, 84.8150],
+  koira: [21.9167, 85.2333],
+  rajgangpur: [22.2000, 84.5800],
+  biramitrapur: [22.4000, 84.7333],
+  bonai: [21.7500, 84.9667],
+  sundargarh: [22.1200, 84.0300],
+  sundergarh: [22.1200, 84.0300],
+
+  // 6. Sambalpur Sub-Locations
+  burla: [21.5000, 83.8700],
+  vimsar: [21.5000, 83.8700],
+  hirakud: [21.5200, 83.8700],
+  dhanupali: [21.4700, 83.9800],
+  ainthapali: [21.4800, 83.9800],
+  rairakhol: [21.0667, 84.3500],
+  kuchinda: [21.7500, 84.3500],
+  sambalpur: [21.4669, 83.9812],
+
+  // 7. Balasore (Baleswar)
+  chandipur: [21.4700, 87.0200],
+  jaleswar: [21.8000, 87.2167],
+  soro: [21.2800, 86.6900],
+  nilagiri: [21.4600, 86.7600],
+  basta: [21.7000, 87.0500],
+  balasore: [21.4934, 86.9135],
+  baleswar: [21.4934, 86.9135],
+
+  // 8. Ganjam / Berhampur
+  berhampur: [19.3149, 84.7941],
+  brahmapur: [19.3149, 84.7941],
+  mkcg: [19.3149, 84.7941],
+  gopalpur: [19.2600, 84.9000],
+  chhatrapur: [19.3500, 84.9800],
+  hinjilicut: [19.4800, 84.7400],
+  hinjili: [19.4800, 84.7400],
+  aska: [19.6100, 84.6600],
+  bhanjanagar: [19.9300, 84.5800],
+  ganjam: [19.3800, 85.0500],
+
+  // 9. Bhadrak
+  dhamra: [20.8000, 86.9000],
+  dhamara: [20.8000, 86.9000],
+  basudevpur: [21.1400, 86.7500],
+  chandbali: [20.7800, 86.7400],
+  bhandaripokhari: [20.9500, 86.3700],
   bhadrak: [21.0544, 86.4957],
+
+  // 10. Mayurbhanj
   baripada: [21.9322, 86.7233],
+  rairangpur: [22.2700, 86.1700],
+  karanjia: [21.7800, 85.9700],
+  udala: [21.5700, 86.5700],
+  jashipur: [21.9700, 86.0800],
   mayurbhanj: [21.9322, 86.7233],
-  dhenkanal: [20.6586, 85.5967],
-  bolangir: [20.7107, 83.4867],
-  balangir: [20.7107, 83.4867],
+
+  // 11. Keonjhar (Kendujhar)
+  barbil: [22.1200, 85.4000],
+  joda: [22.0200, 85.4300],
+  anandapur: [21.2200, 86.1200],
+  champua: [22.0800, 85.6700],
   keonjhar: [21.6289, 85.5817],
   kendujhar: [21.6289, 85.5817],
+
+  // 12. Jharsuguda
+  brajarajnagar: [21.8200, 83.9200],
+  belpahar: [21.8600, 83.8600],
+  jharsuguda: [21.8554, 84.0062],
+
+  // 13. Koraput
+  jeypore: [18.8500, 82.5700],
+  sunabeda: [18.7300, 82.8300],
+  damanjodi: [18.7700, 82.9000],
+  kotpad: [19.1400, 82.3200],
+  koraput: [18.8135, 82.7123],
+
+  // 14. Rayagada
+  gunupur: [19.0800, 83.8200],
+  muniguda: [19.6300, 83.4900],
+  'bissam cuttack': [19.5200, 83.5200],
   rayagada: [19.1678, 83.4158],
-  kendrapara: [20.4994, 86.4230],
-  jajpur: [20.8522, 86.3333],
-  bargarh: [21.3333, 83.6167],
-  nabarangpur: [19.2319, 82.5511],
-  nabarangapur: [19.2319, 82.5511],
-  kalahandi: [19.9075, 83.1656],
+
+  // 15. Kalahandi
   bhawanipatna: [19.9075, 83.1656],
-  nuapada: [20.8333, 82.5333],
-  gajapati: [18.8089, 84.1539],
-  paralakhemundi: [18.8089, 84.1539],
-  deogarh: [21.5333, 84.7333],
-  debagarh: [21.5333, 84.7333],
-  kandhamal: [20.1333, 84.1500],
+  kesinga: [20.2000, 83.2300],
+  dharamgarh: [19.8700, 82.7800],
+  junagarh: [19.8600, 82.9300],
+  lanjigarh: [19.7200, 83.3700],
+  kalahandi: [19.9075, 83.1656],
+
+  // 16. Bolangir (Balangir)
+  titilagarh: [20.3000, 83.1500],
+  patnagarh: [20.7200, 83.1300],
+  kantabanji: [20.4800, 82.8400],
+  bolangir: [20.7107, 83.4867],
+  balangir: [20.7107, 83.4867],
+
+  // 17. Bargarh
+  padampur: [20.9800, 83.0700],
+  attabira: [21.3800, 83.8000],
+  barpali: [21.1800, 83.5800],
+  bargarh: [21.3333, 83.6167],
+
+  // 18. Dhenkanal
+  kamakhyanagar: [20.9300, 85.5600],
+  bhuban: [20.8800, 85.8300],
+  hindol: [20.6000, 85.2000],
+  dhenkanal: [20.6586, 85.5967],
+
+  // 19. Jajpur
+  vyasanagar: [20.9500, 86.1300],
+  'jajpur road': [20.9500, 86.1300],
+  chandikhole: [20.6800, 86.1500],
+  sukinda: [20.9700, 85.9200],
+  jajpur: [20.8522, 86.3333],
+
+  // 20. Kendrapara
+  pattamundai: [20.5700, 86.5700],
+  rajnagar: [20.5800, 86.8500],
+  bhitarkanika: [20.5800, 86.8500],
+  aul: [20.6700, 86.6300],
+  kendrapara: [20.4994, 86.4230],
+
+  // 21. Jagatsinghpur
+  paradip: [20.3167, 86.6167],
+  tirtol: [20.3300, 86.3300],
+  kujang: [20.3000, 86.5400],
+  jagatsinghpur: [20.2667, 86.1667],
+
+  // 22. Nayagarh
+  odagaon: [19.9800, 84.9700],
+  khandapada: [20.2700, 85.1800],
+  daspalla: [20.3300, 84.8500],
+  nayagarh: [20.1333, 85.1000],
+
+  // 23. Kandhamal
   phulbani: [20.1333, 84.1500],
+  baliguda: [20.2000, 83.8200],
+  daringbadi: [19.9000, 84.1300],
+  'g. udayagiri': [20.1300, 84.3700],
+  kandhamal: [20.1333, 84.1500],
+
+  // 24. Boudh
+  kantamal: [20.6500, 83.7300],
+  harbhanga: [20.8200, 84.6000],
   boudh: [20.8333, 84.3167],
+
+  // 25. Subarnapur (Sonepur)
+  birmaharajpur: [20.8800, 84.0700],
+  tarbha: [20.7300, 83.7500],
   sonepur: [20.8333, 83.9167],
   subarnapur: [20.8333, 83.9167],
+
+  // 26. Nabarangpur
+  umerkote: [19.6700, 82.2000],
+  khatiguda: [19.3300, 82.6800],
+  nabarangpur: [19.2319, 82.5511],
+
+  // 27. Nuapada
+  khariar: [20.2800, 82.7700],
+  sinapali: [20.1500, 82.5200],
+  nuapada: [20.8333, 82.5333],
+
+  // 28. Malkangiri
+  balimela: [18.2500, 82.1300],
+  chitrakonda: [18.1200, 82.0800],
   malkangiri: [18.3500, 81.9000],
-  nayagarh: [20.1333, 85.1000],
-  jagatsinghpur: [20.2667, 86.1667],
-  paradip: [20.3167, 86.6167],
+
+  // 29. Gajapati
+  paralakhemundi: [18.8089, 84.1539],
+  mohana: [19.4300, 84.2800],
+  gajapati: [18.8089, 84.1539],
+
+  // 30. Deogarh (Debagarh)
+  barkote: [21.5500, 85.0200],
+  reamal: [21.3700, 84.6700],
+  deogarh: [21.5333, 84.7333],
+  debagarh: [21.5333, 84.7333],
 };
 
-// 2. Reliable Coordinate Resolver
+// 2. Reliable Coordinate Resolver with Longest-Prefix Matching
 export const getAreaCoordinates = (area: AreaSummary): [number, number] => {
   // 1. Direct explicit backend coordinates
   if (
     typeof area.latitude === 'number' &&
     typeof area.longitude === 'number' &&
-    area.latitude > 10 &&
-    area.latitude < 35 &&
-    area.longitude > 60 &&
-    area.longitude < 100
+    area.latitude > 15 &&
+    area.latitude < 25 &&
+    area.longitude > 80 &&
+    area.longitude < 90
   ) {
     return [area.latitude, area.longitude];
   }
 
-  // 2. Lookup by Area ID (area-1, area-2, etc.)
+  // 2. Search district and name strings with longest match first
+  const combined = `${area.name || ''} ${area.district || ''}`.toLowerCase();
+  const sortedKeys = Object.keys(ODISHA_GEO_COORDS).sort((a, b) => b.length - a.length);
+  for (const key of sortedKeys) {
+    if (combined.includes(key)) {
+      return ODISHA_GEO_COORDS[key];
+    }
+  }
+
+  // 3. Lookup by Area ID (area-1, area-2, etc.)
   if (ODISHA_GEO_COORDS[area.id]) {
     return ODISHA_GEO_COORDS[area.id];
   }
 
-  // 3. Search district and name strings
-  const combined = `${area.district || ''} ${area.name || ''}`.toLowerCase();
-  for (const [key, coords] of Object.entries(ODISHA_GEO_COORDS)) {
-    if (combined.includes(key)) {
-      return coords;
-    }
-  }
-
-  // 4. Fallback: Center of Odisha state (Angul/Dhenkanal geographic center)
+  // 4. Fallback: Center of Odisha state
   return [20.8444, 85.1511];
 };
 

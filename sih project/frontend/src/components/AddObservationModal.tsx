@@ -24,19 +24,197 @@ interface AddObservationModalProps {
   onObservationAdded: () => void;
 }
 
-const DISTRICT_PRESETS: { [key: string]: { district: string; defaultWard: string; lat: number; lng: number } } = {
-  Angul: { district: 'Angul', defaultWard: 'Angul Central (Nalco Nagar)', lat: 20.8444, lng: 85.1511 },
-  Bhubaneswar: { district: 'Khurda', defaultWard: 'Saheed Nagar Ward 29', lat: 20.2883, lng: 85.8456 },
-  Cuttack: { district: 'Cuttack', defaultWard: 'CDA Sector 6', lat: 20.4789, lng: 85.8364 },
-  Puri: { district: 'Puri', defaultWard: 'Grand Road Ward 12', lat: 19.8135, lng: 85.8312 },
-  Sambalpur: { district: 'Sambalpur', defaultWard: 'Sambalpur Town Ward 4', lat: 21.4669, lng: 83.9812 },
-  Rourkela: { district: 'Sundargarh', defaultWard: 'Rourkela Steel Township', lat: 22.2604, lng: 84.8536 },
-  Balasore: { district: 'Balasore', defaultWard: 'Balasore Station Ward', lat: 21.4934, lng: 86.9135 },
-  Berhampur: { district: 'Ganjam', defaultWard: 'Berhampur Silk City Ward', lat: 19.3149, lng: 84.7941 },
-  Koraput: { district: 'Koraput', defaultWard: 'Koraput Valley Ward', lat: 18.8135, lng: 82.7123 },
-  Jharsuguda: { district: 'Jharsuguda', defaultWard: 'Jharsuguda Industrial Ward', lat: 21.8554, lng: 84.0062 },
-  Bhadrak: { district: 'Bhadrak', defaultWard: 'Bhadrak Town Ward', lat: 21.0544, lng: 86.4957 },
-  Baripada: { district: 'Mayurbhanj', defaultWard: 'Baripada Heritage Ward', lat: 21.9322, lng: 86.7233 },
+interface SubLocation {
+  name: string;
+  lat: number;
+  lng: number;
+}
+
+interface DistrictConfig {
+  district: string;
+  defaultWard: string;
+  lat: number;
+  lng: number;
+  subLocations: SubLocation[];
+}
+
+const DISTRICT_PRESETS: { [key: string]: DistrictConfig } = {
+  Angul: {
+    district: 'Angul',
+    defaultWard: 'Angul Town Ward 8 (Nalco Nagar)',
+    lat: 20.8444,
+    lng: 85.1511,
+    subLocations: [
+      { name: 'Angul Town Ward 8 (Nalco Nagar)', lat: 20.8444, lng: 85.1511 },
+      { name: 'Pallahara CHC Sub-Division', lat: 21.4333, lng: 85.1833 },
+      { name: 'Khalari Rural PHC Ward', lat: 20.9333, lng: 85.1000 },
+      { name: 'Talcher Coalfield & Thermal Ward', lat: 20.9500, lng: 85.2167 },
+      { name: 'Kaniha NTPC Township', lat: 21.0833, lng: 85.0667 },
+      { name: 'Athmallik Hospital Corridor', lat: 20.7167, lng: 84.5333 },
+      { name: 'Chhendipada Primary Health Centre', lat: 21.0833, lng: 84.8667 },
+      { name: 'Bantala Community Catchment', lat: 20.7333, lng: 85.0167 },
+    ],
+  },
+  Bhubaneswar: {
+    district: 'Khurda',
+    defaultWard: 'Saheed Nagar Ward 29',
+    lat: 20.2883,
+    lng: 85.8456,
+    subLocations: [
+      { name: 'Saheed Nagar Ward 29', lat: 20.2883, lng: 85.8456 },
+      { name: 'Patia InfoCity Corridor', lat: 20.3588, lng: 85.8166 },
+      { name: 'Dumduma Housing Board Colony (Ward 62)', lat: 20.2450, lng: 85.7860 },
+      { name: 'Nayapalli (IRC Village & Behera Sahi)', lat: 20.2980, lng: 85.8180 },
+      { name: 'Chandrasekharpur (CS Pur Damana)', lat: 20.3240, lng: 85.8180 },
+      { name: 'Khandagiri & Jagamara Ward', lat: 20.2600, lng: 85.7870 },
+      { name: 'Old Town Lingaraj Temple Corridor', lat: 20.2400, lng: 85.8330 },
+      { name: 'Baramunda Bus Terminal Ward', lat: 20.2780, lng: 85.7950 },
+      { name: 'Kalinga Nagar & Ghatikia', lat: 20.2700, lng: 85.7500 },
+      { name: 'Industrial Estate Khurda', lat: 20.1834, lng: 85.6179 },
+    ],
+  },
+  Cuttack: {
+    district: 'Cuttack',
+    defaultWard: 'CDA Sector 6',
+    lat: 20.4789,
+    lng: 85.8364,
+    subLocations: [
+      { name: 'CDA Sector 6 (Bidanasi)', lat: 20.4789, lng: 85.8364 },
+      { name: 'Badambadi Transport Corridor', lat: 20.4500, lng: 85.8750 },
+      { name: 'Mangalabag & SCB Medical Campus', lat: 20.4700, lng: 85.8900 },
+      { name: 'Choudwar Industrial Hub', lat: 20.5333, lng: 85.9167 },
+      { name: 'Jagatpur Industrial Zone', lat: 20.5000, lng: 85.9300 },
+      { name: 'Buxi Bazaar Commercial Ward', lat: 20.4630, lng: 85.8750 },
+      { name: 'Athagarh Sub-Division', lat: 20.5167, lng: 85.6333 },
+    ],
+  },
+  Puri: {
+    district: 'Puri',
+    defaultWard: 'Grand Road Ward 12',
+    lat: 19.8135,
+    lng: 85.8312,
+    subLocations: [
+      { name: 'Grand Road (Bada Danda) Corridor', lat: 19.8135, lng: 85.8312 },
+      { name: 'VIP Road & Sea Beach Marine Drive', lat: 19.7980, lng: 85.8250 },
+      { name: 'Konark Sun Temple Catchment', lat: 19.8876, lng: 86.0945 },
+      { name: 'Pipili Craft & Heritage Ward', lat: 20.1167, lng: 85.8333 },
+      { name: 'Satyabadi (Sakshigopal)', lat: 19.9500, lng: 85.8200 },
+      { name: 'Nimapada Sub-Division', lat: 20.0800, lng: 86.0100 },
+    ],
+  },
+  Sambalpur: {
+    district: 'Sambalpur',
+    defaultWard: 'Burla VIMSAR Medical Ward',
+    lat: 21.5000,
+    lng: 83.8700,
+    subLocations: [
+      { name: 'Burla VIMSAR Medical Ward', lat: 21.5000, lng: 83.8700 },
+      { name: 'Hirakud Dam Catchment', lat: 21.5200, lng: 83.8700 },
+      { name: 'Dhanupali & Ainthapali Wards', lat: 21.4700, lng: 83.9800 },
+      { name: 'Rairakhol Sub-Division', lat: 21.0667, lng: 84.3500 },
+      { name: 'Kuchinda Tribal Belt', lat: 21.7500, lng: 84.3500 },
+    ],
+  },
+  Rourkela: {
+    district: 'Sundargarh',
+    defaultWard: 'Rourkela Steel Township (Sector 4)',
+    lat: 22.2500,
+    lng: 84.8700,
+    subLocations: [
+      { name: 'Rourkela Steel Township (Sector 4)', lat: 22.2500, lng: 84.8700 },
+      { name: 'Civil Township & Uditnagar', lat: 22.2400, lng: 84.8300 },
+      { name: 'Chhend Colony & Basanti Nagar', lat: 22.2450, lng: 84.8150 },
+      { name: 'Koira Mining Belt', lat: 21.9167, lng: 85.2333 },
+      { name: 'Rajgangpur Industrial Hub', lat: 22.2000, lng: 84.5800 },
+    ],
+  },
+  Balasore: {
+    district: 'Balasore',
+    defaultWard: 'Chandipur Coast & Defense Hub',
+    lat: 21.4700,
+    lng: 87.0200,
+    subLocations: [
+      { name: 'Chandipur Coast & Defense Hub', lat: 21.4700, lng: 87.0200 },
+      { name: 'Balasore Station & Town Ward', lat: 21.4934, lng: 86.9135 },
+      { name: 'Jaleswar Interstate Gateway', lat: 21.8000, lng: 87.2167 },
+      { name: 'Soro Sub-Division', lat: 21.2800, lng: 86.6900 },
+      { name: 'Nilagiri Tribal Ward', lat: 21.4600, lng: 86.7600 },
+    ],
+  },
+  Berhampur: {
+    district: 'Ganjam',
+    defaultWard: 'Berhampur MKCG Hospital Ward',
+    lat: 19.3149,
+    lng: 84.7941,
+    subLocations: [
+      { name: 'Berhampur MKCG Hospital Ward', lat: 19.3149, lng: 84.7941 },
+      { name: 'Gopalpur on Sea Port', lat: 19.2600, lng: 84.9000 },
+      { name: 'Chhatrapur District HQ', lat: 19.3500, lng: 84.9800 },
+      { name: 'Hinjilicut (Hinjili)', lat: 19.4800, lng: 84.7400 },
+      { name: 'Aska Sugar City', lat: 19.6100, lng: 84.6600 },
+      { name: 'Bhanjanagar Sub-Division', lat: 19.9300, lng: 84.5800 },
+    ],
+  },
+  Koraput: {
+    district: 'Koraput',
+    defaultWard: 'Jeypore Main Commercial Ward',
+    lat: 18.8500,
+    lng: 82.5700,
+    subLocations: [
+      { name: 'Jeypore Main Commercial Ward', lat: 18.8500, lng: 82.5700 },
+      { name: 'Sunabeda HAL Township', lat: 18.7300, lng: 82.8300 },
+      { name: 'Damanjodi NALCO Colony', lat: 18.7700, lng: 82.9000 },
+      { name: 'Kotpad Handloom Catchment', lat: 19.1400, lng: 82.3200 },
+      { name: 'Koraput Hill Town HQ', lat: 18.8135, lng: 82.7123 },
+    ],
+  },
+  Bhadrak: {
+    district: 'Bhadrak',
+    defaultWard: 'Bhadrak Puruna Bazar Ward',
+    lat: 21.0544,
+    lng: 86.4957,
+    subLocations: [
+      { name: 'Bhadrak Puruna Bazar Ward', lat: 21.0544, lng: 86.4957 },
+      { name: 'Dhamra Port & Marine Corridor', lat: 20.8000, lng: 86.9000 },
+      { name: 'Basudevpur Coastal Ward', lat: 21.1400, lng: 86.7500 },
+      { name: 'Chandbali Riverine Hub', lat: 20.7800, lng: 86.7400 },
+    ],
+  },
+  Baripada: {
+    district: 'Mayurbhanj',
+    defaultWard: 'Baripada Palbani & Heritage Ward',
+    lat: 21.9322,
+    lng: 86.7233,
+    subLocations: [
+      { name: 'Baripada Palbani & Heritage Ward', lat: 21.9322, lng: 86.7233 },
+      { name: 'Rairangpur Sub-Division', lat: 22.2700, lng: 86.1700 },
+      { name: 'Karanjia Similipal Buffer', lat: 21.7800, lng: 85.9700 },
+      { name: 'Udala Sub-Division', lat: 21.5700, lng: 86.5700 },
+    ],
+  },
+  Keonjhar: {
+    district: 'Keonjhar',
+    defaultWard: 'Keonjhar District Town',
+    lat: 21.6289,
+    lng: 85.5817,
+    subLocations: [
+      { name: 'Keonjhar District Town', lat: 21.6289, lng: 85.5817 },
+      { name: 'Barbil Mining Corridor', lat: 22.1200, lng: 85.4000 },
+      { name: 'Joda Iron Ore Belt', lat: 22.0200, lng: 85.4300 },
+      { name: 'Anandapur Sub-Division', lat: 21.2200, lng: 86.1200 },
+    ],
+  },
+  Jharsuguda: {
+    district: 'Jharsuguda',
+    defaultWard: 'Jharsuguda Industrial Ward',
+    lat: 21.8554,
+    lng: 84.0062,
+    subLocations: [
+      { name: 'Jharsuguda Industrial Ward', lat: 21.8554, lng: 84.0062 },
+      { name: 'Brajarajnagar Coal Belt', lat: 21.8200, lng: 83.9200 },
+      { name: 'Belpahar Refractory Ward', lat: 21.8600, lng: 83.8600 },
+    ],
+  },
 };
 
 export const AddObservationModal: React.FC<AddObservationModalProps> = ({
@@ -50,8 +228,9 @@ export const AddObservationModal: React.FC<AddObservationModalProps> = ({
   const todayStr = new Date().toISOString().split('T')[0];
 
   // Location Fields (Pure District & Location Name - No area IDs)
+  const [selectedDistrictKey, setSelectedDistrictKey] = useState<string>('Angul');
   const [district, setDistrict] = useState<string>('Angul');
-  const [locationName, setLocationName] = useState<string>('Angul Central (Nalco Nagar)');
+  const [locationName, setLocationName] = useState<string>('Angul Town Ward 8 (Nalco Nagar)');
   const [latitude, setLatitude] = useState<string>('20.8444');
   const [longitude, setLongitude] = useState<string>('85.1511');
 
@@ -74,6 +253,7 @@ export const AddObservationModal: React.FC<AddObservationModalProps> = ({
   if (!isOpen || user?.role !== 'ADMIN') return null;
 
   const handleApplyDistrictPreset = (presetKey: string) => {
+    setSelectedDistrictKey(presetKey);
     const preset = DISTRICT_PRESETS[presetKey];
     if (preset) {
       setDistrict(preset.district);
@@ -83,9 +263,16 @@ export const AddObservationModal: React.FC<AddObservationModalProps> = ({
     }
   };
 
+  const handleSelectSubLocation = (sub: SubLocation) => {
+    setLocationName(sub.name);
+    setLatitude(sub.lat.toString());
+    setLongitude(sub.lng.toString());
+  };
+
   const handleResetForm = () => {
+    setSelectedDistrictKey('Angul');
     setDistrict('Angul');
-    setLocationName('Angul Central (Nalco Nagar)');
+    setLocationName('Angul Town Ward 8 (Nalco Nagar)');
     setLatitude('20.8444');
     setLongitude('85.1511');
     setValue('180');
@@ -211,6 +398,35 @@ export const AddObservationModal: React.FC<AddObservationModalProps> = ({
               </div>
             </div>
 
+            {/* Sub-Location / Localities Chips for Selected District */}
+            {DISTRICT_PRESETS[selectedDistrictKey]?.subLocations && (
+              <div className="pt-1">
+                <div className="text-[10px] text-brand-300 font-semibold mb-1 flex items-center justify-between">
+                  <span>📍 Sub-Locations & Wards in {selectedDistrictKey}:</span>
+                  <span className="text-[9px] text-slate-500">1-Click precision autofill</span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {DISTRICT_PRESETS[selectedDistrictKey].subLocations.map((sub) => {
+                    const isSelected = locationName === sub.name;
+                    return (
+                      <button
+                        key={sub.name}
+                        type="button"
+                        onClick={() => handleSelectSubLocation(sub)}
+                        className={`text-[10px] px-2 py-0.5 rounded-md border transition-all ${
+                          isSelected
+                            ? 'bg-brand-500/20 text-brand-300 border-brand-500 font-semibold shadow-sm'
+                            : 'bg-slate-900/90 text-slate-400 border-slate-800 hover:text-slate-200 hover:border-slate-700'
+                        }`}
+                      >
+                        {sub.name.split('(')[0].trim()}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* District & Location Name Inputs */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
               <div>
@@ -237,7 +453,7 @@ export const AddObservationModal: React.FC<AddObservationModalProps> = ({
                   type="text"
                   value={locationName}
                   onChange={(e) => setLocationName(e.target.value)}
-                  placeholder="e.g. Angul Central, Nalco Nagar, Saheed Nagar"
+                  placeholder="e.g. Angul Central, Pallahara, Khalari, Dumduma"
                   className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500"
                   required
                 />
