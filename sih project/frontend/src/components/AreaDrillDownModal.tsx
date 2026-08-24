@@ -17,7 +17,6 @@ import {
   Microscope,
   ArrowLeft,
   Volume2,
-  Download,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -76,12 +75,13 @@ export const AreaDrillDownModal: React.FC<AreaDrillDownModalProps> = ({
   };
 
   const playAdvisoryAudio = (lang: 'english' | 'odia' | 'hindi', text: string) => {
+    // If already playing this language, clicking again turns it OFF!
     if (playingAdvisoryLang === lang && advisoryAudio) {
       advisoryAudio.pause();
       advisoryAudio.currentTime = 0;
       setAdvisoryAudio(null);
       setPlayingAdvisoryLang(null);
-      showToast('info', 'Audio Stopped', 'Playback paused.');
+      showToast('info', 'Audio Turned Off', `${lang.toUpperCase()} advisory playback stopped.`);
       return;
     }
 
@@ -96,7 +96,7 @@ export const AreaDrillDownModal: React.FC<AreaDrillDownModalProps> = ({
     setPlayingAdvisoryLang(lang);
 
     audio.onplay = () => {
-      showToast('info', `Playing ${lang.toUpperCase()} Advisory Audio`, `Broadcasting alert for ${area.name}`);
+      showToast('info', `Playing ${lang.toUpperCase()} Advisory Audio`, `Click button again anytime to turn off.`);
     };
     audio.onended = () => {
       setPlayingAdvisoryLang(null);
@@ -110,17 +110,6 @@ export const AreaDrillDownModal: React.FC<AreaDrillDownModalProps> = ({
     audio.play().catch((err) => console.warn('Audio play warning:', err));
   };
 
-  const downloadAdvisoryAudio = (lang: 'english' | 'odia' | 'hindi', text: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const url = api.getAudioTTSUrl(lang, text);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Advisory_${area.name.replace(/[^a-zA-Z0-9]/g, '_')}_${lang}.mp3`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    showToast('success', 'Downloading Audio MP3', `Downloaded ${lang.toUpperCase()} advisory.`);
-  };
 
 
   return (
@@ -441,26 +430,18 @@ export const AreaDrillDownModal: React.FC<AreaDrillDownModalProps> = ({
                 <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-slate-200">
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="font-bold text-blue-400">English (EN):</span>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => playAdvisoryAudio('english', advisoryText.en!)}
-                        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold ${
-                          playingAdvisoryLang === 'english'
-                            ? 'bg-blue-600 text-white animate-pulse'
-                            : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
-                        }`}
-                      >
-                        <Volume2 className="w-3 h-3" />
-                        <span>{playingAdvisoryLang === 'english' ? 'Playing' : 'Listen'}</span>
-                      </button>
-                      <button
-                        onClick={(e) => downloadAdvisoryAudio('english', advisoryText.en!, e)}
-                        className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200"
-                        title="Download English MP3"
-                      >
-                        <Download className="w-3 h-3" />
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => playAdvisoryAudio('english', advisoryText.en!)}
+                      className={`flex items-center gap-1 px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                        playingAdvisoryLang === 'english'
+                          ? 'bg-blue-600 text-white ring-1 ring-blue-400 animate-pulse'
+                          : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
+                      }`}
+                      title={playingAdvisoryLang === 'english' ? "Click to Stop Audio" : "Click to Listen to English Advisory"}
+                    >
+                      <Volume2 className="w-3 h-3" />
+                      <span>{playingAdvisoryLang === 'english' ? 'Stop Audio' : 'Listen (EN)'}</span>
+                    </button>
                   </div>
                   <p className="text-slate-300 leading-relaxed">{advisoryText.en}</p>
                 </div>
@@ -471,26 +452,18 @@ export const AreaDrillDownModal: React.FC<AreaDrillDownModalProps> = ({
                 <div className="p-3 rounded-xl bg-slate-900/90 border border-amber-500/30 text-amber-200">
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="font-bold text-amber-400">Odia (ଓଡ଼ିଆ):</span>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => playAdvisoryAudio('odia', advisoryText.odia!)}
-                        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold ${
-                          playingAdvisoryLang === 'odia'
-                            ? 'bg-amber-600 text-white animate-pulse'
-                            : 'bg-slate-800 hover:bg-amber-950/40 text-amber-300'
-                        }`}
-                      >
-                        <Volume2 className="w-3 h-3" />
-                        <span>{playingAdvisoryLang === 'odia' ? 'Playing' : 'Listen (ଓଡ଼ିଆ)'}</span>
-                      </button>
-                      <button
-                        onClick={(e) => downloadAdvisoryAudio('odia', advisoryText.odia!, e)}
-                        className="p-1 rounded-lg bg-slate-800 hover:bg-amber-950/40 text-amber-400 hover:text-amber-200"
-                        title="Download Odia MP3 (ଓଡ଼ିଆ .mp3)"
-                      >
-                        <Download className="w-3 h-3" />
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => playAdvisoryAudio('odia', advisoryText.odia!)}
+                      className={`flex items-center gap-1 px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                        playingAdvisoryLang === 'odia'
+                          ? 'bg-amber-600 text-white ring-1 ring-amber-400 animate-pulse'
+                          : 'bg-slate-800 hover:bg-amber-950/40 text-amber-300 border border-amber-500/20'
+                      }`}
+                      title={playingAdvisoryLang === 'odia' ? "Click to Stop Audio (ଓଡ଼ିଆ ବନ୍ଦ କରନ୍ତୁ)" : "Click to Listen in Odia (ଓଡ଼ିଆ ଶୁଣନ୍ତୁ)"}
+                    >
+                      <Volume2 className="w-3 h-3" />
+                      <span>{playingAdvisoryLang === 'odia' ? 'Stop Audio' : 'Listen (ଓଡ଼ିଆ)'}</span>
+                    </button>
                   </div>
                   <p className="text-amber-100 leading-relaxed font-sans">{advisoryText.odia}</p>
                 </div>
@@ -501,26 +474,18 @@ export const AreaDrillDownModal: React.FC<AreaDrillDownModalProps> = ({
                 <div className="p-3 rounded-xl bg-slate-900/90 border border-sky-500/30 text-sky-200">
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="font-bold text-sky-400">Hindi (हिन्दी):</span>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => playAdvisoryAudio('hindi', advisoryText.hi!)}
-                        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold ${
-                          playingAdvisoryLang === 'hindi'
-                            ? 'bg-sky-600 text-white animate-pulse'
-                            : 'bg-slate-800 hover:bg-sky-950/40 text-sky-300'
-                        }`}
-                      >
-                        <Volume2 className="w-3 h-3" />
-                        <span>{playingAdvisoryLang === 'hindi' ? 'Playing' : 'Listen (हिन्दी)'}</span>
-                      </button>
-                      <button
-                        onClick={(e) => downloadAdvisoryAudio('hindi', advisoryText.hi!, e)}
-                        className="p-1 rounded-lg bg-slate-800 hover:bg-sky-950/40 text-sky-400 hover:text-sky-200"
-                        title="Download Hindi MP3 (हिन्दी .mp3)"
-                      >
-                        <Download className="w-3 h-3" />
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => playAdvisoryAudio('hindi', advisoryText.hi!)}
+                      className={`flex items-center gap-1 px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                        playingAdvisoryLang === 'hindi'
+                          ? 'bg-sky-600 text-white ring-1 ring-sky-400 animate-pulse'
+                          : 'bg-slate-800 hover:bg-sky-950/40 text-sky-300 border border-sky-500/20'
+                      }`}
+                      title={playingAdvisoryLang === 'hindi' ? "Click to Stop Audio (हिन्दी बंद करें)" : "Click to Listen in Hindi (हिन्दी सुनें)"}
+                    >
+                      <Volume2 className="w-3 h-3" />
+                      <span>{playingAdvisoryLang === 'hindi' ? 'Stop Audio' : 'Listen (हिन्दी)'}</span>
+                    </button>
                   </div>
                   <p className="text-sky-100 leading-relaxed">{advisoryText.hi}</p>
                 </div>

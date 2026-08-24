@@ -127,14 +127,14 @@ export const HealthReportsSection: React.FC<HealthReportsSectionProps> = ({
   };
 
   const playVoiceReport = (report: HealthReport, lang: 'english' | 'odia' | 'hindi' = 'english') => {
-    // If already playing this report and language, stop
+    // If already playing this report and language, clicking again turns it OFF!
     if (playingReportId === report.id && playingLang === lang && currentAudio) {
       currentAudio.pause();
       currentAudio.currentTime = 0;
       setCurrentAudio(null);
       setPlayingReportId(null);
       setPlayingLang(null);
-      showToast('info', 'Audio Stopped', 'Audio playback stopped.');
+      showToast('info', 'Audio Turned Off', 'Report directive playback stopped.');
       return;
     }
 
@@ -164,7 +164,7 @@ export const HealthReportsSection: React.FC<HealthReportsSectionProps> = ({
 
     audio.onplay = () => {
       const label = lang === 'odia' ? 'Odia (ଓଡ଼ିଆ)' : lang === 'hindi' ? 'Hindi (हिन्दी)' : 'English';
-      showToast('info', `Playing ${label} Directive`, `Broadcasting report for ${report.area_name}`);
+      showToast('info', `Playing ${label} Directive`, `Click language again anytime to turn off.`);
     };
 
     audio.onended = () => {
@@ -199,26 +199,6 @@ export const HealthReportsSection: React.FC<HealthReportsSectionProps> = ({
     audio.play().catch((err) => console.warn('Audio play notice:', err));
   };
 
-  const downloadVoiceReport = (report: HealthReport, lang: 'english' | 'odia' | 'hindi', e: React.MouseEvent) => {
-    e.stopPropagation();
-    const recs = parseRecommendations(report.recommendations).join('. ');
-    let text = '';
-    if (lang === 'odia') {
-      text = `${report.area_name} ପାଇଁ ସରକାରୀ ସ୍ୱାସ୍ଥ୍ୟ ନିର୍ଦ୍ଦେଶାବଳୀ। ବିପଦ ସ୍ତର: ${report.risk_level === 'HIGH' ? 'ଉଚ୍ଚ' : report.risk_level === 'MEDIUM' ? 'ମଧ୍ୟମ' : 'ସାଧାରଣ'}। ଅଧିକାରୀ: ${report.officer_name}। ମୁଖ୍ୟ ନିର୍ଦ୍ଦେଶ: ${recs}`;
-    } else if (lang === 'hindi') {
-      text = `${report.area_name} हेतु आधिकारिक स्वास्थ्य निर्देश। जोखिम स्तर: ${report.risk_level === 'HIGH' ? 'उच्च' : report.risk_level === 'MEDIUM' ? 'मध्यम' : 'सामान्य'}। अधिकारी: ${report.officer_name}। मुख्य निर्देश: ${recs}`;
-    } else {
-      text = `Official Health Directive for ${report.area_name}. Risk Level: ${report.risk_level}. Filed by ${report.officer_name}. Key directives: ${recs}`;
-    }
-    const audioUrl = api.getAudioTTSUrl(lang, text);
-    const a = document.createElement('a');
-    a.href = audioUrl;
-    a.download = `Directive_${report.area_name.replace(/[^a-zA-Z0-9]/g, '_')}_${lang}.mp3`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    showToast('success', 'Downloading Directive MP3', `Downloaded ${lang.toUpperCase()} voice directive.`);
-  };
 
 
   const safeReports = Array.isArray(reports) ? reports : SAMPLE_REPORTS;
@@ -339,78 +319,53 @@ export const HealthReportsSection: React.FC<HealthReportsSectionProps> = ({
 
                   {/* Actions Right: Multilingual Voice Directive & Privileged Delete */}
                   <div className="flex flex-wrap items-center gap-1.5 shrink-0">
-                    {/* Multilingual Voice Directive Group */}
-                    <div className="flex items-center bg-slate-950/80 border border-slate-700/70 rounded-xl p-0.5 gap-1 shadow-sm">
-                      <span className="text-[10px] text-slate-400 pl-1.5 pr-0.5 font-medium flex items-center gap-1">
+                    {/* Multilingual Voice Directive Group: Click to Turn On / Turn Off */}
+                    <div className="flex items-center bg-slate-950/80 border border-slate-700/70 rounded-xl p-1 gap-1 shadow-sm">
+                      <span className="text-[10px] text-slate-400 pl-1 pr-0.5 font-medium flex items-center gap-1">
                         <Volume2 className={`w-3 h-3 ${playingReportId === report.id ? 'text-emerald-400 animate-bounce' : 'text-blue-400'}`} />
+                        <span className="hidden sm:inline">Voice:</span>
                       </span>
 
-                      {/* EN Play/Download */}
-                      <div className="flex items-center bg-slate-800 rounded-lg overflow-hidden">
-                        <button
-                          onClick={() => playVoiceReport(report, 'english')}
-                          title="Listen in English"
-                          className={`px-1.5 py-1 text-[10px] font-bold ${
-                            playingReportId === report.id && playingLang === 'english'
-                              ? 'bg-blue-600 text-white'
-                              : 'text-slate-300 hover:bg-slate-700'
-                          }`}
-                        >
-                          EN
-                        </button>
-                        <button
-                          onClick={(e) => downloadVoiceReport(report, 'english', e)}
-                          title="Download English Audio"
-                          className="px-1 py-1 text-[9px] text-slate-500 hover:text-slate-200 border-l border-slate-700 hover:bg-slate-700"
-                        >
-                          <Download className="w-2.5 h-2.5" />
-                        </button>
-                      </div>
+                      {/* EN Toggle */}
+                      <button
+                        onClick={() => playVoiceReport(report, 'english')}
+                        title={playingReportId === report.id && playingLang === 'english' ? "Click to Turn OFF English Directive" : "Click to Turn ON English Directive"}
+                        className={`px-2 py-0.5 text-[10px] font-bold rounded-lg transition-all ${
+                          playingReportId === report.id && playingLang === 'english'
+                            ? 'bg-blue-600 text-white ring-1 ring-blue-400 animate-pulse'
+                            : 'text-slate-300 bg-slate-800 hover:bg-slate-700'
+                        }`}
+                      >
+                        EN
+                      </button>
 
-                      {/* Odia Play/Download */}
-                      <div className="flex items-center bg-slate-800 rounded-lg overflow-hidden border border-amber-500/20">
-                        <button
-                          onClick={() => playVoiceReport(report, 'odia')}
-                          title="Listen in Odia (ଓଡ଼ିଆ)"
-                          className={`px-1.5 py-1 text-[10px] font-bold ${
-                            playingReportId === report.id && playingLang === 'odia'
-                              ? 'bg-amber-600 text-white'
-                              : 'text-amber-300 hover:bg-amber-950/40'
-                          }`}
-                        >
-                          ଓଡ଼ିଆ
-                        </button>
-                        <button
-                          onClick={(e) => downloadVoiceReport(report, 'odia', e)}
-                          title="Download Odia Audio (ଓଡ଼ିଆ .mp3)"
-                          className="px-1 py-1 text-[9px] text-amber-500 hover:text-amber-300 border-l border-slate-700 hover:bg-amber-950/40"
-                        >
-                          <Download className="w-2.5 h-2.5" />
-                        </button>
-                      </div>
+                      {/* Odia Toggle */}
+                      <button
+                        onClick={() => playVoiceReport(report, 'odia')}
+                        title={playingReportId === report.id && playingLang === 'odia' ? "Click to Turn OFF Odia Directive (ଓଡ଼ିଆ ବନ୍ଦ କରନ୍ତୁ)" : "Click to Turn ON Odia Directive (ଓଡ଼ିଆ ଶୁଣନ୍ତୁ)"}
+                        className={`px-2 py-0.5 text-[10px] font-bold rounded-lg transition-all ${
+                          playingReportId === report.id && playingLang === 'odia'
+                            ? 'bg-amber-600 text-white ring-1 ring-amber-400 animate-pulse'
+                            : 'text-amber-300 bg-slate-800 hover:bg-amber-950/40 border border-amber-500/20'
+                        }`}
+                      >
+                        ଓଡ଼ିଆ
+                      </button>
 
-                      {/* Hindi Play/Download */}
-                      <div className="flex items-center bg-slate-800 rounded-lg overflow-hidden border border-sky-500/20">
-                        <button
-                          onClick={() => playVoiceReport(report, 'hindi')}
-                          title="Listen in Hindi (हिन्दी)"
-                          className={`px-1.5 py-1 text-[10px] font-bold ${
-                            playingReportId === report.id && playingLang === 'hindi'
-                              ? 'bg-sky-600 text-white'
-                              : 'text-sky-300 hover:bg-sky-950/40'
-                          }`}
-                        >
-                          हिन्दी
-                        </button>
-                        <button
-                          onClick={(e) => downloadVoiceReport(report, 'hindi', e)}
-                          title="Download Hindi Audio (हिन्दी .mp3)"
-                          className="px-1 py-1 text-[9px] text-sky-500 hover:text-sky-300 border-l border-slate-700 hover:bg-sky-950/40"
-                        >
-                          <Download className="w-2.5 h-2.5" />
-                        </button>
-                      </div>
+                      {/* Hindi Toggle */}
+                      <button
+                        onClick={() => playVoiceReport(report, 'hindi')}
+                        title={playingReportId === report.id && playingLang === 'hindi' ? "Click to Turn OFF Hindi Directive (हिन्दी बंद करें)" : "Click to Turn ON Hindi Directive (हिन्दी सुनें)"}
+                        className={`px-2 py-0.5 text-[10px] font-bold rounded-lg transition-all ${
+                          playingReportId === report.id && playingLang === 'hindi'
+                            ? 'bg-sky-600 text-white ring-1 ring-sky-400 animate-pulse'
+                            : 'text-sky-300 bg-slate-800 hover:bg-sky-950/40 border border-sky-500/20'
+                        }`}
+                      >
+                        हिन्दी
+                      </button>
                     </div>
+
 
                     {(isAdmin || user?.id === report.officer_id) && (
                       <button

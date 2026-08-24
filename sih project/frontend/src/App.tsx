@@ -132,27 +132,32 @@ export const App: React.FC = () => {
     setChatbotOpen(true);
   };
 
-  // Multilingual High-Quality Neural Audio Player & Download Engine
-  const playAudioAdvisory = (lang: 'english' | 'odia' | 'hindi' = 'english') => {
-    // If already playing this language, stop playback
-    if (activeAudioLang === lang && audioElement) {
-      audioElement.pause();
-      audioElement.currentTime = 0;
-      setAudioElement(null);
-      setActiveAudioLang(null);
-      setIsPlayingAudio(false);
-      showToast('info', 'Audio Stopped', `${lang.toUpperCase()} audio bulletin paused.`);
-      return;
-    }
-
-    // Stop any ongoing audio element
+  // Stop All Audio
+  const stopAllAudio = () => {
     if (audioElement) {
       audioElement.pause();
       audioElement.currentTime = 0;
+      setAudioElement(null);
     }
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
+    setActiveAudioLang(null);
+    setIsPlayingAudio(false);
+  };
+
+  // Multilingual High-Quality Neural Audio Player (Click to Turn On, Click again to Turn Off)
+  const playAudioAdvisory = (lang: 'english' | 'odia' | 'hindi' = 'english') => {
+    // If already playing this language, clicking it again TURNS IT OFF!
+    if (activeAudioLang === lang) {
+      stopAllAudio();
+      const langLabel = lang === 'odia' ? 'Odia (ଓଡ଼ିଆ)' : lang === 'hindi' ? 'Hindi (हिन्दी)' : 'English';
+      showToast('info', 'Audio Turned Off', `${langLabel} audio playback stopped.`);
+      return;
+    }
+
+    // Stop previous audio
+    stopAllAudio();
 
     const audioUrl = api.getAudioTTSUrl(lang);
     const audio = new Audio(audioUrl);
@@ -163,7 +168,7 @@ export const App: React.FC = () => {
     audio.onplay = () => {
       setIsPlayingAudio(true);
       const langLabel = lang === 'odia' ? 'Odia (ଓଡ଼ିଆ)' : lang === 'hindi' ? 'Hindi (हिन्दी)' : 'English';
-      showToast('info', `Playing ${langLabel} Audio Broadcast`, 'High-fidelity audio stream active.');
+      showToast('info', `Playing ${langLabel} Audio`, 'Click language again anytime to turn off.');
     };
 
     audio.onended = () => {
@@ -213,19 +218,6 @@ export const App: React.FC = () => {
     });
   };
 
-  // Direct Audio Pack Download
-  const downloadAudioAdvisory = (lang: 'english' | 'odia' | 'hindi', e: React.MouseEvent) => {
-    e.stopPropagation();
-    const url = api.getAudioTTSUrl(lang);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `MediSentinel_Advisory_${lang}.mp3`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    const langLabel = lang === 'odia' ? 'Odia (ଓଡ଼ିଆ)' : lang === 'hindi' ? 'Hindi (हिन्दी)' : 'English';
-    showToast('success', 'Downloading Audio Broadcast', `Downloading ${langLabel} MP3 bulletin...`);
-  };
 
 
   return (
@@ -323,82 +315,62 @@ export const App: React.FC = () => {
               Community Watch
             </button>
 
-            {/* Audio Voice Advisory & Download Bar */}
+            {/* Audio Voice Advisory Bar: Click to Turn On / Turn Off */}
             <div className="flex items-center gap-1.5 bg-slate-900/95 border border-slate-700/80 rounded-xl p-1 shrink-0 shadow-md">
-              <span className="text-[10px] text-slate-300 px-1 font-semibold flex items-center gap-1">
+              <button
+                onClick={stopAllAudio}
+                className="text-[10px] text-slate-300 px-1.5 py-1 rounded-lg hover:bg-slate-800 font-semibold flex items-center gap-1 transition-colors"
+                title={isPlayingAudio ? "Click to Stop / Turn Off Audio" : "Audio Bulletin Controls"}
+              >
                 {isPlayingAudio ? (
                   <Volume2 className="w-3.5 h-3.5 text-emerald-400 animate-bounce" />
                 ) : (
                   <Volume2 className="w-3.5 h-3.5 text-brand-400" />
                 )}
-                <span className="hidden xs:inline">Audio:</span>
-              </span>
+                <span className="hidden xs:inline">{isPlayingAudio ? "Stop Audio" : "Audio:"}</span>
+              </button>
 
-              {/* English Play & Download */}
-              <div className="flex items-center bg-slate-800 rounded-lg overflow-hidden border border-slate-700/50">
-                <button
-                  onClick={() => playAudioAdvisory('english')}
-                  className={`px-2 py-1 text-[10px] font-bold transition-all flex items-center gap-1 ${
-                    activeAudioLang === 'english'
-                      ? 'bg-blue-600 text-white animate-pulse'
-                      : 'hover:bg-slate-700 text-slate-200'
-                  }`}
-                  title="Play / Pause Health Advisory in English"
-                >
-                  EN
-                </button>
-                <button
-                  onClick={(e) => downloadAudioAdvisory('english', e)}
-                  className="px-1 py-1 text-[9px] hover:bg-blue-600/30 text-slate-400 hover:text-blue-300 border-l border-slate-700"
-                  title="Download English Audio Broadcast (.mp3)"
-                >
-                  <Download className="w-2.5 h-2.5" />
-                </button>
-              </div>
+              {/* English Toggle On / Off */}
+              <button
+                onClick={() => playAudioAdvisory('english')}
+                className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 ${
+                  activeAudioLang === 'english'
+                    ? 'bg-blue-600 text-white ring-2 ring-blue-400 shadow-md animate-pulse'
+                    : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60'
+                }`}
+                title={activeAudioLang === 'english' ? "Click to Turn OFF English Audio" : "Click to Turn ON English Audio"}
+              >
+                <span>EN</span>
+                {activeAudioLang === 'english' && <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>}
+              </button>
 
-              {/* Odia Play & Download */}
-              <div className="flex items-center bg-slate-800 rounded-lg overflow-hidden border border-amber-500/30">
-                <button
-                  onClick={() => playAudioAdvisory('odia')}
-                  className={`px-2 py-1 text-[10px] font-bold transition-all flex items-center gap-1 ${
-                    activeAudioLang === 'odia'
-                      ? 'bg-amber-600 text-white animate-pulse'
-                      : 'hover:bg-amber-950/40 text-amber-300'
-                  }`}
-                  title="Play / Pause Health Advisory in Odia (ଓଡ଼ିଆ)"
-                >
-                  ଓଡ଼ିଆ
-                </button>
-                <button
-                  onClick={(e) => downloadAudioAdvisory('odia', e)}
-                  className="px-1 py-1 text-[9px] hover:bg-amber-600/30 text-amber-400 hover:text-amber-200 border-l border-amber-500/20"
-                  title="Download Odia Audio Broadcast (ଓଡ଼ିଆ .mp3)"
-                >
-                  <Download className="w-2.5 h-2.5" />
-                </button>
-              </div>
+              {/* Odia Toggle On / Off */}
+              <button
+                onClick={() => playAudioAdvisory('odia')}
+                className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 ${
+                  activeAudioLang === 'odia'
+                    ? 'bg-amber-600 text-white ring-2 ring-amber-400 shadow-md animate-pulse'
+                    : 'bg-slate-800 hover:bg-amber-950/40 text-amber-300 border border-amber-500/30'
+                }`}
+                title={activeAudioLang === 'odia' ? "Click to Turn OFF Odia Audio (ଓଡ଼ିଆ ବନ୍ଦ କରନ୍ତୁ)" : "Click to Turn ON Odia Audio (ଓଡ଼ିଆ ଶୁଣନ୍ତୁ)"}
+              >
+                <span>ଓଡ଼ିଆ</span>
+                {activeAudioLang === 'odia' && <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>}
+              </button>
 
-              {/* Hindi Play & Download */}
-              <div className="flex items-center bg-slate-800 rounded-lg overflow-hidden border border-sky-500/30">
-                <button
-                  onClick={() => playAudioAdvisory('hindi')}
-                  className={`px-2 py-1 text-[10px] font-bold transition-all flex items-center gap-1 ${
-                    activeAudioLang === 'hindi'
-                      ? 'bg-sky-600 text-white animate-pulse'
-                      : 'hover:bg-sky-950/40 text-sky-300'
-                  }`}
-                  title="Play / Pause Health Advisory in Hindi (हिन्दी)"
-                >
-                  हिन्दी
-                </button>
-                <button
-                  onClick={(e) => downloadAudioAdvisory('hindi', e)}
-                  className="px-1 py-1 text-[9px] hover:bg-sky-600/30 text-sky-400 hover:text-sky-200 border-l border-sky-500/20"
-                  title="Download Hindi Audio Broadcast (हिन्दी .mp3)"
-                >
-                  <Download className="w-2.5 h-2.5" />
-                </button>
-              </div>
+              {/* Hindi Toggle On / Off */}
+              <button
+                onClick={() => playAudioAdvisory('hindi')}
+                className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex items-center gap-1 ${
+                  activeAudioLang === 'hindi'
+                    ? 'bg-sky-600 text-white ring-2 ring-sky-400 shadow-md animate-pulse'
+                    : 'bg-slate-800 hover:bg-sky-950/40 text-sky-300 border border-sky-500/30'
+                }`}
+                title={activeAudioLang === 'hindi' ? "Click to Turn OFF Hindi Audio (हिन्दी बंद करें)" : "Click to Turn ON Hindi Audio (हिन्दी सुनें)"}
+              >
+                <span>हिन्दी</span>
+                {activeAudioLang === 'hindi' && <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>}
+              </button>
             </div>
           </div>
         </div>

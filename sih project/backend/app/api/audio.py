@@ -27,25 +27,50 @@ DEFAULT_ADVISORIES = {
     ),
 }
 
+# Complete Odia to Devanagari Phonetic Mapping Dictionary
+ODIA_CHAR_MAP = {
+    # Vowels
+    '\u0B05': 'अ', '\u0B06': 'आ', '\u0B07': 'इ', '\u0B08': 'ई',
+    '\u0B09': 'उ', '\u0B0A': 'ऊ', '\u0B0B': 'ऋ', '\u0B0C': 'ऌ',
+    '\u0B0F': 'ए', '\u0B10': 'ऐ', '\u0B13': 'ओ', '\u0B14': 'औ',
+    # Consonants
+    '\u0B15': 'क', '\u0B16': 'ख', '\u0B17': 'ग', '\u0B18': 'घ', '\u0B19': 'ङ',
+    '\u0B1A': 'च', '\u0B1B': 'छ', '\u0B1C': 'ज', '\u0B1D': 'झ', '\u0B1E': 'ञ',
+    '\u0B1F': 'ट', '\u0B20': 'ठ', '\u0B21': 'ड', '\u0B22': 'ढ', '\u0B23': 'ण',
+    '\u0B24': 'त', '\u0B25': 'थ', '\u0B26': 'द', '\u0B27': 'ध', '\u0B28': 'न',
+    '\u0B2A': 'प', '\u0B2B': 'फ', '\u0B2C': 'ब', '\u0B2D': 'भ', '\u0B2E': 'म',
+    '\u0B2F': 'य', '\u0B30': 'र', '\u0B32': 'ल', '\u0B33': 'ल', '\u0B35': 'व',
+    '\u0B36': 'श', '\u0B37': 'ष', '\u0B38': 'स', '\u0B39': 'ह',
+    # Special Consonants
+    '\u0B5F': 'य', '\u0B71': 'व', '\u0B5C': 'ड़', '\u0B5D': 'ढ़',
+    # Matras / Vowel signs
+    '\u0B3E': 'ा', '\u0B3F': 'ि', '\u0B40': 'ी', '\u0B41': 'ु',
+    '\u0B42': 'ू', '\u0B43': 'ृ', '\u0B44': 'ॄ',
+    '\u0B47': 'े', '\u0B48': 'ै', '\u0B4B': 'ो', '\u0B4C': 'ौ',
+    # Virama / Halanta
+    '\u0B4D': '्',
+    # Modifiers
+    '\u0B01': 'ँ', '\u0B02': 'ं', '\u0B03': 'ः', '\u0B3C': '़',
+    # Avagraha & digits
+    '\u0B3D': 'ऽ',
+    '\u0B66': '०', '\u0B67': '१', '\u0B68': '२', '\u0B69': '३', '\u0B6A': '४',
+    '\u0B6B': '५', '\u0B6C': '६', '\u0B6D': '७', '\u0B6E': '८', '\u0B6F': '९',
+}
+
 # In-memory audio cache: (hash_key) -> bytes
 _AUDIO_CACHE: dict[str, bytes] = {}
 
 
 def odia_to_phonetic_indic(text: str) -> str:
     """
-    Converts Odia unicode characters (0x0B00-0x0B7F) to exact phonetic Devanagari (0x0900-0x097F).
-    This allows neural Indic TTS models (Swara/Madhur) to flawlessly pronounce Odia words with authentic accent.
+    Converts Odia unicode text to clean, highly-pronounceable Devanagari Indic phonemes.
+    Prevents unpronounceable unicode code points from causing TTS dropouts.
     """
     res = []
     for ch in text:
-        code = ord(ch)
-        if 0x0B00 <= code <= 0x0B7F:
-            # 0x0B00 - 0x0900 = 0x0200
-            dev_code = code - 0x0200
-            res.append(chr(dev_code))
-        else:
-            res.append(ch)
+        res.append(ODIA_CHAR_MAP.get(ch, ch))
     return "".join(res)
+
 
 
 async def synthesize_speech(text: str, lang: str) -> bytes:
