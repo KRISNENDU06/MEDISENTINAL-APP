@@ -11,6 +11,7 @@ from app.api import (
     admin,
     alerts,
     areas,
+    audio,
     auth,
     chat,
     copilot,
@@ -91,6 +92,7 @@ app.include_router(copilot.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")
 app.include_router(reports.router, prefix="/api")
 app.include_router(telemetry.router, prefix="/api")
+app.include_router(audio.router, prefix="/api")
 
 frontend_dist = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"))
 assets_dir = os.path.join(frontend_dist, "assets")

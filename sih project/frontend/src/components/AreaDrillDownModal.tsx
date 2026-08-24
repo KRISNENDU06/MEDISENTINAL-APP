@@ -16,6 +16,8 @@ import {
   FileText,
   Microscope,
   ArrowLeft,
+  Volume2,
+  Download,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -42,7 +44,9 @@ export const AreaDrillDownModal: React.FC<AreaDrillDownModalProps> = ({
   const { showToast } = useToast();
   const [dispatching, setDispatching] = useState(false);
   const [advisoryOpen, setAdvisoryOpen] = useState(false);
-  const [advisoryText, setAdvisoryText] = useState<{ en?: string; odia?: string } | null>(null);
+  const [advisoryText, setAdvisoryText] = useState<{ en?: string; odia?: string; hi?: string } | null>(null);
+  const [playingAdvisoryLang, setPlayingAdvisoryLang] = useState<string | null>(null);
+  const [advisoryAudio, setAdvisoryAudio] = useState<HTMLAudioElement | null>(null);
 
   if (!area) return null;
 
@@ -65,10 +69,59 @@ export const AreaDrillDownModal: React.FC<AreaDrillDownModalProps> = ({
   const handleGenerateAdvisory = () => {
     setAdvisoryOpen(true);
     setAdvisoryText({
-      en: `PUBLIC HEALTH ADVISORY (${area.name}): Early health syndromic surveillance has detected anomalous fever and antipyretic drug purchasing (+${area.signals.medicineDemand.deviation}). Community members experiencing persistent high fever or joint pain are advised to visit the nearest Community Health Center. Mosquito breeding control & vector management activated.`,
-      odia: `ସ୍ୱାସ୍ଥ୍ୟ ସତର୍କତା ସୂଚନା (${area.name}): ସିଣ୍ଡ୍ରୋମିକ୍ ନିରୀକ୍ଷଣରୁ ଜ୍ୱର ଓ ଔଷଧ ଚାହିଦା ବୃଦ୍ଧି ପାଇବା ଜଣାପଡିଛି । ଜ୍ୱର ଲକ୍ଷଣ ଥିଲେ ତୁରନ୍ତ ନିକଟସ୍ଥ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ରକୁ ଯାଆନ୍ତୁ । ମଶା ନିୟନ୍ତ୍ରଣ ବ୍ୟବସ୍ଥା ଗ୍ରହଣ କରାଯାଉଛି ।`,
+      en: `PUBLIC HEALTH ADVISORY (${area.name}): Early syndromic surveillance has detected anomalous fever and antipyretic drug purchasing (+${area.signals.medicineDemand.deviation}). Community members experiencing persistent fever or body ache are advised to visit the nearest Primary Health Center. Mosquito breeding control & vector management activated.`,
+      odia: `ସ୍ୱାସ୍ଥ୍ୟ ସତର୍କତା ସୂଚନା (${area.name}): ସିଣ୍ଡ୍ରୋମିକ୍ ନିରୀକ୍ଷଣରୁ ଜ୍ୱର ଓ ଔଷଧ ଚାହିଦା ବୃଦ୍ଧି ପାଇବା ଜଣାପଡିଛି । ଜ୍ୱର କିମ୍ବା ଶରୀର ଯନ୍ତ୍ରଣା ଲକ୍ଷଣ ଥିଲେ ତୁରନ୍ତ ନିକଟସ୍ଥ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ରକୁ ଯାଆନ୍ତୁ । ମଶା ନିୟନ୍ତ୍ରଣ ବ୍ୟବସ୍ଥା ଗ୍ରହଣ କରାଯାଉଛି ।`,
+      hi: `जन स्वास्थ्य चेतावनी (${area.name}): सिंड्रोमिक सर्विलांस द्वारा बुखार और दवाओं की मांग में वृद्धि दर्ज की गई है (+${area.signals.medicineDemand.deviation})। तेज बुखार या शरीर दर्द होने पर तुरंत नजदीकी स्वास्थ्य केंद्र पर जाएं। मच्छर नियंत्रण अभियान सक्रिय किया गया है।`,
     });
   };
+
+  const playAdvisoryAudio = (lang: 'english' | 'odia' | 'hindi', text: string) => {
+    if (playingAdvisoryLang === lang && advisoryAudio) {
+      advisoryAudio.pause();
+      advisoryAudio.currentTime = 0;
+      setAdvisoryAudio(null);
+      setPlayingAdvisoryLang(null);
+      showToast('info', 'Audio Stopped', 'Playback paused.');
+      return;
+    }
+
+    if (advisoryAudio) {
+      advisoryAudio.pause();
+      advisoryAudio.currentTime = 0;
+    }
+
+    const audioUrl = api.getAudioTTSUrl(lang, text);
+    const audio = new Audio(audioUrl);
+    setAdvisoryAudio(audio);
+    setPlayingAdvisoryLang(lang);
+
+    audio.onplay = () => {
+      showToast('info', `Playing ${lang.toUpperCase()} Advisory Audio`, `Broadcasting alert for ${area.name}`);
+    };
+    audio.onended = () => {
+      setPlayingAdvisoryLang(null);
+      setAdvisoryAudio(null);
+    };
+    audio.onerror = () => {
+      setPlayingAdvisoryLang(null);
+      setAdvisoryAudio(null);
+      showToast('error', 'Audio Error', 'Unable to stream audio.');
+    };
+    audio.play().catch((err) => console.warn('Audio play warning:', err));
+  };
+
+  const downloadAdvisoryAudio = (lang: 'english' | 'odia' | 'hindi', text: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = api.getAudioTTSUrl(lang, text);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Advisory_${area.name.replace(/[^a-zA-Z0-9]/g, '_')}_${lang}.mp3`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast('success', 'Downloading Audio MP3', `Downloaded ${lang.toUpperCase()} advisory.`);
+  };
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-in fade-in">
@@ -368,27 +421,110 @@ export const AreaDrillDownModal: React.FC<AreaDrillDownModalProps> = ({
 
         {/* Multilingual Advisory Modal */}
         {advisoryOpen && advisoryText && (
-          <div className="mt-4 p-4 rounded-2xl bg-slate-950 border border-slate-700 animate-in fade-in">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-brand-400 uppercase">
-                Generated Multilingual Public Health Advisory
+          <div className="mt-4 p-4 rounded-2xl bg-slate-950 border border-slate-700 animate-in fade-in space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-brand-400 uppercase flex items-center gap-1.5">
+                <Volume2 className="w-3.5 h-3.5" />
+                Generated Multilingual Public Health Advisory & Voice Bulletins
               </span>
               <button
                 onClick={() => setAdvisoryOpen(false)}
-                className="text-xs text-slate-400 hover:text-white"
+                className="text-xs text-slate-400 hover:text-white px-2 py-1 bg-slate-900 rounded-lg"
               >
                 Close
               </button>
             </div>
-            <div className="space-y-2 text-xs">
-              <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-slate-200">
-                <span className="font-bold text-slate-400 block mb-1">English (EN):</span>
-                {advisoryText.en}
-              </div>
-              <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-emerald-300">
-                <span className="font-bold text-slate-400 block mb-1">Odia (ଓଡ଼ିଆ):</span>
-                {advisoryText.odia}
-              </div>
+
+            <div className="space-y-2.5 text-xs">
+              {/* English Card */}
+              {advisoryText.en && (
+                <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-slate-200">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-bold text-blue-400">English (EN):</span>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => playAdvisoryAudio('english', advisoryText.en!)}
+                        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold ${
+                          playingAdvisoryLang === 'english'
+                            ? 'bg-blue-600 text-white animate-pulse'
+                            : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
+                        }`}
+                      >
+                        <Volume2 className="w-3 h-3" />
+                        <span>{playingAdvisoryLang === 'english' ? 'Playing' : 'Listen'}</span>
+                      </button>
+                      <button
+                        onClick={(e) => downloadAdvisoryAudio('english', advisoryText.en!, e)}
+                        className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200"
+                        title="Download English MP3"
+                      >
+                        <Download className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-slate-300 leading-relaxed">{advisoryText.en}</p>
+                </div>
+              )}
+
+              {/* Odia Card */}
+              {advisoryText.odia && (
+                <div className="p-3 rounded-xl bg-slate-900/90 border border-amber-500/30 text-amber-200">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-bold text-amber-400">Odia (ଓଡ଼ିଆ):</span>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => playAdvisoryAudio('odia', advisoryText.odia!)}
+                        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold ${
+                          playingAdvisoryLang === 'odia'
+                            ? 'bg-amber-600 text-white animate-pulse'
+                            : 'bg-slate-800 hover:bg-amber-950/40 text-amber-300'
+                        }`}
+                      >
+                        <Volume2 className="w-3 h-3" />
+                        <span>{playingAdvisoryLang === 'odia' ? 'Playing' : 'Listen (ଓଡ଼ିଆ)'}</span>
+                      </button>
+                      <button
+                        onClick={(e) => downloadAdvisoryAudio('odia', advisoryText.odia!, e)}
+                        className="p-1 rounded-lg bg-slate-800 hover:bg-amber-950/40 text-amber-400 hover:text-amber-200"
+                        title="Download Odia MP3 (ଓଡ଼ିଆ .mp3)"
+                      >
+                        <Download className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-amber-100 leading-relaxed font-sans">{advisoryText.odia}</p>
+                </div>
+              )}
+
+              {/* Hindi Card */}
+              {advisoryText.hi && (
+                <div className="p-3 rounded-xl bg-slate-900/90 border border-sky-500/30 text-sky-200">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-bold text-sky-400">Hindi (हिन्दी):</span>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => playAdvisoryAudio('hindi', advisoryText.hi!)}
+                        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold ${
+                          playingAdvisoryLang === 'hindi'
+                            ? 'bg-sky-600 text-white animate-pulse'
+                            : 'bg-slate-800 hover:bg-sky-950/40 text-sky-300'
+                        }`}
+                      >
+                        <Volume2 className="w-3 h-3" />
+                        <span>{playingAdvisoryLang === 'hindi' ? 'Playing' : 'Listen (हिन्दी)'}</span>
+                      </button>
+                      <button
+                        onClick={(e) => downloadAdvisoryAudio('hindi', advisoryText.hi!, e)}
+                        className="p-1 rounded-lg bg-slate-800 hover:bg-sky-950/40 text-sky-400 hover:text-sky-200"
+                        title="Download Hindi MP3 (हिन्दी .mp3)"
+                      >
+                        <Download className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-sky-100 leading-relaxed">{advisoryText.hi}</p>
+                </div>
+              )}
             </div>
           </div>
         )}

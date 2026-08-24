@@ -410,6 +410,15 @@ export const api = {
     request<void>(`/api/reports/${reportId}`, {
       method: 'DELETE',
     }),
+
+  getAudioTTSUrl: (lang: 'english' | 'odia' | 'hindi' | string, text?: string) => {
+    const params = new URLSearchParams();
+    params.set('lang', lang);
+    if (text && text.trim()) {
+      params.set('text', text.trim());
+    }
+    return `${API_BASE}/api/audio/tts?${params.toString()}`;
+  },
 };
 
 export interface HealthReport {

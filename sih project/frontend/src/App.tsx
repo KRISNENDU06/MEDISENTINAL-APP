@@ -30,6 +30,7 @@ import {
   ShieldCheck,
   Activity,
   FileText,
+  Download,
 } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -55,6 +56,8 @@ export const App: React.FC = () => {
   const [fileReportModalOpen, setFileReportModalOpen] = useState<boolean>(false);
   const [reportsRefreshTrigger, setReportsRefreshTrigger] = useState<number>(0);
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
+  const [activeAudioLang, setActiveAudioLang] = useState<'english' | 'odia' | 'hindi' | null>(null);
+  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
 
   const [isEngineRunning, setIsEngineRunning] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -129,39 +132,101 @@ export const App: React.FC = () => {
     setChatbotOpen(true);
   };
 
-  // Multilingual Speech Synthesis Audio Player
+  // Multilingual High-Quality Neural Audio Player & Download Engine
   const playAudioAdvisory = (lang: 'english' | 'odia' | 'hindi' = 'english') => {
-    if (!('speechSynthesis' in window)) {
-      showToast('error', 'Audio Unavailable', 'Speech synthesis is not supported on this browser.');
-      return;
-    }
-
-    if (isPlayingAudio) {
-      window.speechSynthesis.cancel();
+    // If already playing this language, stop playback
+    if (activeAudioLang === lang && audioElement) {
+      audioElement.pause();
+      audioElement.currentTime = 0;
+      setAudioElement(null);
+      setActiveAudioLang(null);
       setIsPlayingAudio(false);
-      showToast('info', 'Audio Stopped', 'Audio bulletin playback paused.');
+      showToast('info', 'Audio Stopped', `${lang.toUpperCase()} audio bulletin paused.`);
       return;
     }
 
-    window.speechSynthesis.cancel();
-    let text = '';
-    if (lang === 'odia') {
-      text = 'ସ୍ୱାସ୍ଥ୍ୟ ସତର୍କତା ବୁଲେଟିନ୍। ମେଡିସେଣ୍ଟିନେଲ୍ ତରଫରୁ ସମସ୍ତ ନାଗରିକଙ୍କୁ ସୂଚନା। ନିଜ ଘର ପାଖରେ ଜମି ରହିଥିବା ପାଣି ନଷ୍ଟ କରନ୍ତୁ, ମଶା ଧୂଆଁ ବ୍ୟବହାର କରନ୍ତୁ, ଏବଂ ଜ୍ୱର କିମ୍ବା ଶରୀର ଯନ୍ତ୍ରଣା ହେଲେ ତୁରନ୍ତ ନିକଟସ୍ଥ ପ୍ରାଥମିକ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ର କୁ ଯାଆନ୍ତୁ।';
-    } else if (lang === 'hindi') {
-      text = 'जन स्वास्थ्य बुलेटिन। मेडीसेंटिनल सर्विलांस द्वारा सूचित किया जाता है कि घर के आसपास जलजमाव न होने दें, मच्छरदानी का प्रयोग करें, और तेज बुखार या कमजोरी होने पर तुरंत नजदीकी स्वास्थ्य केंद्र पर जाएं।';
-    } else {
-      text = 'Public Health Advisory. MediSentinel early surveillance active. Inspect water containers, prevent vector breeding, maintain hydration with ORS, and visit your nearest Urban Primary Health Center if symptoms persist.';
+    // Stop any ongoing audio element
+    if (audioElement) {
+      audioElement.pause();
+      audioElement.currentTime = 0;
+    }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
     }
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.95;
-    utterance.pitch = 1.0;
-    utterance.onend = () => setIsPlayingAudio(false);
-    utterance.onerror = () => setIsPlayingAudio(false);
+    const audioUrl = api.getAudioTTSUrl(lang);
+    const audio = new Audio(audioUrl);
+    setAudioElement(audio);
+    setActiveAudioLang(lang);
     setIsPlayingAudio(true);
-    window.speechSynthesis.speak(utterance);
-    showToast('info', `Playing ${lang.toUpperCase()} Audio Advisory`, text.slice(0, 65) + '...');
+
+    audio.onplay = () => {
+      setIsPlayingAudio(true);
+      const langLabel = lang === 'odia' ? 'Odia (ଓଡ଼ିଆ)' : lang === 'hindi' ? 'Hindi (हिन्दी)' : 'English';
+      showToast('info', `Playing ${langLabel} Audio Broadcast`, 'High-fidelity audio stream active.');
+    };
+
+    audio.onended = () => {
+      setIsPlayingAudio(false);
+      setActiveAudioLang(null);
+      setAudioElement(null);
+    };
+
+    audio.onerror = () => {
+      // Fallback to browser SpeechSynthesis if network fails
+      setAudioElement(null);
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        let text = '';
+        let speechLang = 'en-IN';
+        if (lang === 'odia') {
+          text = 'ସ୍ୱାସ୍ଥ୍ୟ ସତର୍କତା ବୁଲେଟିନ୍। ମେଡିସେଣ୍ଟିନେଲ୍ ସର୍ଭିଲାନ୍ସ ତରଫରୁ ସମସ୍ତ ନାଗରିକଙ୍କୁ ସୂଚନା। ନିଜ ଘର ପାଖରେ ଜମି ରହିଥିବା ପାଣି ନଷ୍ଟ କରନ୍ତୁ, ମଶା ଧୂଆଁ ବ୍ୟବହାର କରନ୍ତୁ, ଏବଂ ଜ୍ୱର କିମ୍ବା ଶରୀର ଯନ୍ତ୍ରଣା ହେଲେ ତୁରନ୍ତ ନିକଟସ୍ଥ ପ୍ରାଥମିକ ସ୍ୱାସ୍ଥ୍ୟ କେନ୍ଦ୍ରକୁ ଯାଆନ୍ତୁ।';
+          speechLang = 'hi-IN';
+        } else if (lang === 'hindi') {
+          text = 'जन स्वास्थ्य बुलेटिन। मेडीसेंटिनल सर्विलांस द्वारा सूचित किया जाता है कि घर के आसपास जलजमाव न होने दें, मच्छरदानी का प्रयोग करें, और तेज बुखार या कमजोरी होने पर तुरंत नजदीकी स्वास्थ्य केंद्र पर जाएं।';
+          speechLang = 'hi-IN';
+        } else {
+          text = 'Public Health Advisory. MediSentinel early surveillance active. Inspect water containers, prevent vector breeding, maintain hydration with ORS, and visit your nearest Urban Primary Health Center if symptoms persist.';
+          speechLang = 'en-IN';
+        }
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = speechLang;
+        utterance.rate = 0.95;
+        utterance.onend = () => {
+          setIsPlayingAudio(false);
+          setActiveAudioLang(null);
+        };
+        utterance.onerror = () => {
+          setIsPlayingAudio(false);
+          setActiveAudioLang(null);
+        };
+        window.speechSynthesis.speak(utterance);
+      } else {
+        setIsPlayingAudio(false);
+        setActiveAudioLang(null);
+        showToast('error', 'Audio Error', 'Unable to stream audio.');
+      }
+    };
+
+    audio.play().catch((err) => {
+      console.warn('Audio play request:', err);
+    });
   };
+
+  // Direct Audio Pack Download
+  const downloadAudioAdvisory = (lang: 'english' | 'odia' | 'hindi', e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = api.getAudioTTSUrl(lang);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `MediSentinel_Advisory_${lang}.mp3`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    const langLabel = lang === 'odia' ? 'Odia (ଓଡ଼ିଆ)' : lang === 'hindi' ? 'Hindi (हिन्दी)' : 'English';
+    showToast('success', 'Downloading Audio Broadcast', `Downloading ${langLabel} MP3 bulletin...`);
+  };
+
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg-main)] text-[var(--text-main)] font-sans transition-colors duration-300">
@@ -258,33 +323,82 @@ export const App: React.FC = () => {
               Community Watch
             </button>
 
-            {/* Audio Voice Advisory Dropdown / Buttons */}
-            <div className="flex items-center gap-1 bg-slate-900/90 border border-slate-700 rounded-xl p-1 shrink-0">
-              <span className="text-[10px] text-slate-400 px-1 font-semibold flex items-center gap-1">
-                {isPlayingAudio ? <VolumeX className="w-3 h-3 text-rose-400 animate-pulse" /> : <Volume2 className="w-3 h-3 text-brand-400" />}
-                Audio:
+            {/* Audio Voice Advisory & Download Bar */}
+            <div className="flex items-center gap-1.5 bg-slate-900/95 border border-slate-700/80 rounded-xl p-1 shrink-0 shadow-md">
+              <span className="text-[10px] text-slate-300 px-1 font-semibold flex items-center gap-1">
+                {isPlayingAudio ? (
+                  <Volume2 className="w-3.5 h-3.5 text-emerald-400 animate-bounce" />
+                ) : (
+                  <Volume2 className="w-3.5 h-3.5 text-brand-400" />
+                )}
+                <span className="hidden xs:inline">Audio:</span>
               </span>
-              <button
-                onClick={() => playAudioAdvisory('english')}
-                className="px-2 py-1 text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition-colors"
-                title="Play Advisory in English"
-              >
-                EN
-              </button>
-              <button
-                onClick={() => playAudioAdvisory('odia')}
-                className="px-2 py-1 text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-lg transition-colors"
-                title="Play Advisory in Odia (ଓଡ଼ିଆ)"
-              >
-                ଓଡ଼ିଆ
-              </button>
-              <button
-                onClick={() => playAudioAdvisory('hindi')}
-                className="px-2 py-1 text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-sky-300 rounded-lg transition-colors"
-                title="Play Advisory in Hindi (हिन्दी)"
-              >
-                हिन्दी
-              </button>
+
+              {/* English Play & Download */}
+              <div className="flex items-center bg-slate-800 rounded-lg overflow-hidden border border-slate-700/50">
+                <button
+                  onClick={() => playAudioAdvisory('english')}
+                  className={`px-2 py-1 text-[10px] font-bold transition-all flex items-center gap-1 ${
+                    activeAudioLang === 'english'
+                      ? 'bg-blue-600 text-white animate-pulse'
+                      : 'hover:bg-slate-700 text-slate-200'
+                  }`}
+                  title="Play / Pause Health Advisory in English"
+                >
+                  EN
+                </button>
+                <button
+                  onClick={(e) => downloadAudioAdvisory('english', e)}
+                  className="px-1 py-1 text-[9px] hover:bg-blue-600/30 text-slate-400 hover:text-blue-300 border-l border-slate-700"
+                  title="Download English Audio Broadcast (.mp3)"
+                >
+                  <Download className="w-2.5 h-2.5" />
+                </button>
+              </div>
+
+              {/* Odia Play & Download */}
+              <div className="flex items-center bg-slate-800 rounded-lg overflow-hidden border border-amber-500/30">
+                <button
+                  onClick={() => playAudioAdvisory('odia')}
+                  className={`px-2 py-1 text-[10px] font-bold transition-all flex items-center gap-1 ${
+                    activeAudioLang === 'odia'
+                      ? 'bg-amber-600 text-white animate-pulse'
+                      : 'hover:bg-amber-950/40 text-amber-300'
+                  }`}
+                  title="Play / Pause Health Advisory in Odia (ଓଡ଼ିଆ)"
+                >
+                  ଓଡ଼ିଆ
+                </button>
+                <button
+                  onClick={(e) => downloadAudioAdvisory('odia', e)}
+                  className="px-1 py-1 text-[9px] hover:bg-amber-600/30 text-amber-400 hover:text-amber-200 border-l border-amber-500/20"
+                  title="Download Odia Audio Broadcast (ଓଡ଼ିଆ .mp3)"
+                >
+                  <Download className="w-2.5 h-2.5" />
+                </button>
+              </div>
+
+              {/* Hindi Play & Download */}
+              <div className="flex items-center bg-slate-800 rounded-lg overflow-hidden border border-sky-500/30">
+                <button
+                  onClick={() => playAudioAdvisory('hindi')}
+                  className={`px-2 py-1 text-[10px] font-bold transition-all flex items-center gap-1 ${
+                    activeAudioLang === 'hindi'
+                      ? 'bg-sky-600 text-white animate-pulse'
+                      : 'hover:bg-sky-950/40 text-sky-300'
+                  }`}
+                  title="Play / Pause Health Advisory in Hindi (हिन्दी)"
+                >
+                  हिन्दी
+                </button>
+                <button
+                  onClick={(e) => downloadAudioAdvisory('hindi', e)}
+                  className="px-1 py-1 text-[9px] hover:bg-sky-600/30 text-sky-400 hover:text-sky-200 border-l border-sky-500/20"
+                  title="Download Hindi Audio Broadcast (हिन्दी .mp3)"
+                >
+                  <Download className="w-2.5 h-2.5" />
+                </button>
+              </div>
             </div>
           </div>
         </div>

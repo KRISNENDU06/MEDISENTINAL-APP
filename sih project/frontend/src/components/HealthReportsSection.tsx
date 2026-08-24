@@ -14,6 +14,7 @@ import {
   Trash2,
   Filter,
   CheckCircle2,
+  Download,
 } from 'lucide-react';
 import { api, HealthReport } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -35,6 +36,9 @@ export const HealthReportsSection: React.FC<HealthReportsSectionProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [filterRisk, setFilterRisk] = useState<string>('ALL');
   const [expandedReportId, setExpandedReportId] = useState<number | null>(null);
+  const [playingReportId, setPlayingReportId] = useState<number | null>(null);
+  const [playingLang, setPlayingLang] = useState<'english' | 'odia' | 'hindi' | null>(null);
+  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
 
   const canCreateReport = isAdmin || isHealthOfficial;
 
@@ -122,19 +126,100 @@ export const HealthReportsSection: React.FC<HealthReportsSectionProps> = ({
     return String(recStr).split('\n').filter((s) => s.trim().length > 0);
   };
 
-  const playVoiceReport = (report: HealthReport) => {
-    if (!('speechSynthesis' in window)) {
-      showToast('error', 'Audio Unavailable', 'Speech synthesis is not supported on this browser.');
+  const playVoiceReport = (report: HealthReport, lang: 'english' | 'odia' | 'hindi' = 'english') => {
+    // If already playing this report and language, stop
+    if (playingReportId === report.id && playingLang === lang && currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      setCurrentAudio(null);
+      setPlayingReportId(null);
+      setPlayingLang(null);
+      showToast('info', 'Audio Stopped', 'Audio playback stopped.');
       return;
     }
-    window.speechSynthesis.cancel();
+
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+    }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+
     const recs = parseRecommendations(report.recommendations).join('. ');
-    const text = `Official Health Directive for ${report.area_name}. Risk Level: ${report.risk_level}. Filed by ${report.officer_name}. Key directives: ${recs}`;
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.95;
-    window.speechSynthesis.speak(utterance);
-    showToast('info', 'Playing Official Directive', `Audio playback started for ${report.area_name}`);
+    let text = '';
+    if (lang === 'odia') {
+      text = `${report.area_name} ପାଇଁ ସରକାରୀ ସ୍ୱାସ୍ଥ୍ୟ ନିର୍ଦ୍ଦେଶାବଳୀ। ବିପଦ ସ୍ତର: ${report.risk_level === 'HIGH' ? 'ଉଚ୍ଚ' : report.risk_level === 'MEDIUM' ? 'ମଧ୍ୟମ' : 'ସାଧାରଣ'}। ଅଧିକାରୀ: ${report.officer_name}। ମୁଖ୍ୟ ନିର୍ଦ୍ଦେଶ: ${recs}`;
+    } else if (lang === 'hindi') {
+      text = `${report.area_name} हेतु आधिकारिक स्वास्थ्य निर्देश। जोखिम स्तर: ${report.risk_level === 'HIGH' ? 'उच्च' : report.risk_level === 'MEDIUM' ? 'मध्यम' : 'सामान्य'}। अधिकारी: ${report.officer_name}। मुख्य निर्देश: ${recs}`;
+    } else {
+      text = `Official Health Directive for ${report.area_name}. Risk Level: ${report.risk_level}. Filed by ${report.officer_name}. Key directives: ${recs}`;
+    }
+
+    const audioUrl = api.getAudioTTSUrl(lang, text);
+    const audio = new Audio(audioUrl);
+    setCurrentAudio(audio);
+    setPlayingReportId(report.id);
+    setPlayingLang(lang);
+
+    audio.onplay = () => {
+      const label = lang === 'odia' ? 'Odia (ଓଡ଼ିଆ)' : lang === 'hindi' ? 'Hindi (हिन्दी)' : 'English';
+      showToast('info', `Playing ${label} Directive`, `Broadcasting report for ${report.area_name}`);
+    };
+
+    audio.onended = () => {
+      setPlayingReportId(null);
+      setPlayingLang(null);
+      setCurrentAudio(null);
+    };
+
+    audio.onerror = () => {
+      setCurrentAudio(null);
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = lang === 'odia' ? 'hi-IN' : lang === 'hindi' ? 'hi-IN' : 'en-IN';
+        utterance.rate = 0.95;
+        utterance.onend = () => {
+          setPlayingReportId(null);
+          setPlayingLang(null);
+        };
+        utterance.onerror = () => {
+          setPlayingReportId(null);
+          setPlayingLang(null);
+        };
+        window.speechSynthesis.speak(utterance);
+      } else {
+        setPlayingReportId(null);
+        setPlayingLang(null);
+        showToast('error', 'Audio Error', 'Unable to play directive audio.');
+      }
+    };
+
+    audio.play().catch((err) => console.warn('Audio play notice:', err));
   };
+
+  const downloadVoiceReport = (report: HealthReport, lang: 'english' | 'odia' | 'hindi', e: React.MouseEvent) => {
+    e.stopPropagation();
+    const recs = parseRecommendations(report.recommendations).join('. ');
+    let text = '';
+    if (lang === 'odia') {
+      text = `${report.area_name} ପାଇଁ ସରକାରୀ ସ୍ୱାସ୍ଥ୍ୟ ନିର୍ଦ୍ଦେଶାବଳୀ। ବିପଦ ସ୍ତର: ${report.risk_level === 'HIGH' ? 'ଉଚ୍ଚ' : report.risk_level === 'MEDIUM' ? 'ମଧ୍ୟମ' : 'ସାଧାରଣ'}। ଅଧିକାରୀ: ${report.officer_name}। ମୁଖ୍ୟ ନିର୍ଦ୍ଦେଶ: ${recs}`;
+    } else if (lang === 'hindi') {
+      text = `${report.area_name} हेतु आधिकारिक स्वास्थ्य निर्देश। जोखिम स्तर: ${report.risk_level === 'HIGH' ? 'उच्च' : report.risk_level === 'MEDIUM' ? 'मध्यम' : 'सामान्य'}। अधिकारी: ${report.officer_name}। मुख्य निर्देश: ${recs}`;
+    } else {
+      text = `Official Health Directive for ${report.area_name}. Risk Level: ${report.risk_level}. Filed by ${report.officer_name}. Key directives: ${recs}`;
+    }
+    const audioUrl = api.getAudioTTSUrl(lang, text);
+    const a = document.createElement('a');
+    a.href = audioUrl;
+    a.download = `Directive_${report.area_name.replace(/[^a-zA-Z0-9]/g, '_')}_${lang}.mp3`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast('success', 'Downloading Directive MP3', `Downloaded ${lang.toUpperCase()} voice directive.`);
+  };
+
 
   const safeReports = Array.isArray(reports) ? reports : SAMPLE_REPORTS;
   const filteredReports = safeReports.filter((r) => {
@@ -252,15 +337,80 @@ export const HealthReportsSection: React.FC<HealthReportsSectionProps> = ({
                     </p>
                   </div>
 
-                  {/* Actions Right */}
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <button
-                      onClick={() => playVoiceReport(report)}
-                      title="Listen to Audio Health Directive"
-                      className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors"
-                    >
-                      <Volume2 className="w-3.5 h-3.5 text-blue-400" />
-                    </button>
+                  {/* Actions Right: Multilingual Voice Directive & Privileged Delete */}
+                  <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                    {/* Multilingual Voice Directive Group */}
+                    <div className="flex items-center bg-slate-950/80 border border-slate-700/70 rounded-xl p-0.5 gap-1 shadow-sm">
+                      <span className="text-[10px] text-slate-400 pl-1.5 pr-0.5 font-medium flex items-center gap-1">
+                        <Volume2 className={`w-3 h-3 ${playingReportId === report.id ? 'text-emerald-400 animate-bounce' : 'text-blue-400'}`} />
+                      </span>
+
+                      {/* EN Play/Download */}
+                      <div className="flex items-center bg-slate-800 rounded-lg overflow-hidden">
+                        <button
+                          onClick={() => playVoiceReport(report, 'english')}
+                          title="Listen in English"
+                          className={`px-1.5 py-1 text-[10px] font-bold ${
+                            playingReportId === report.id && playingLang === 'english'
+                              ? 'bg-blue-600 text-white'
+                              : 'text-slate-300 hover:bg-slate-700'
+                          }`}
+                        >
+                          EN
+                        </button>
+                        <button
+                          onClick={(e) => downloadVoiceReport(report, 'english', e)}
+                          title="Download English Audio"
+                          className="px-1 py-1 text-[9px] text-slate-500 hover:text-slate-200 border-l border-slate-700 hover:bg-slate-700"
+                        >
+                          <Download className="w-2.5 h-2.5" />
+                        </button>
+                      </div>
+
+                      {/* Odia Play/Download */}
+                      <div className="flex items-center bg-slate-800 rounded-lg overflow-hidden border border-amber-500/20">
+                        <button
+                          onClick={() => playVoiceReport(report, 'odia')}
+                          title="Listen in Odia (ଓଡ଼ିଆ)"
+                          className={`px-1.5 py-1 text-[10px] font-bold ${
+                            playingReportId === report.id && playingLang === 'odia'
+                              ? 'bg-amber-600 text-white'
+                              : 'text-amber-300 hover:bg-amber-950/40'
+                          }`}
+                        >
+                          ଓଡ଼ିଆ
+                        </button>
+                        <button
+                          onClick={(e) => downloadVoiceReport(report, 'odia', e)}
+                          title="Download Odia Audio (ଓଡ଼ିଆ .mp3)"
+                          className="px-1 py-1 text-[9px] text-amber-500 hover:text-amber-300 border-l border-slate-700 hover:bg-amber-950/40"
+                        >
+                          <Download className="w-2.5 h-2.5" />
+                        </button>
+                      </div>
+
+                      {/* Hindi Play/Download */}
+                      <div className="flex items-center bg-slate-800 rounded-lg overflow-hidden border border-sky-500/20">
+                        <button
+                          onClick={() => playVoiceReport(report, 'hindi')}
+                          title="Listen in Hindi (हिन्दी)"
+                          className={`px-1.5 py-1 text-[10px] font-bold ${
+                            playingReportId === report.id && playingLang === 'hindi'
+                              ? 'bg-sky-600 text-white'
+                              : 'text-sky-300 hover:bg-sky-950/40'
+                          }`}
+                        >
+                          हिन्दी
+                        </button>
+                        <button
+                          onClick={(e) => downloadVoiceReport(report, 'hindi', e)}
+                          title="Download Hindi Audio (हिन्दी .mp3)"
+                          className="px-1 py-1 text-[9px] text-sky-500 hover:text-sky-300 border-l border-slate-700 hover:bg-sky-950/40"
+                        >
+                          <Download className="w-2.5 h-2.5" />
+                        </button>
+                      </div>
+                    </div>
 
                     {(isAdmin || user?.id === report.officer_id) && (
                       <button
