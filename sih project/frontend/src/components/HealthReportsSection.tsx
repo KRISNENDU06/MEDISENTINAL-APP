@@ -38,34 +38,39 @@ export const HealthReportsSection: React.FC<HealthReportsSectionProps> = ({
 
   const canCreateReport = isAdmin || isHealthOfficial;
 
+  const SAMPLE_REPORTS: HealthReport[] = [
+    {
+      id: 1,
+      area_id: 1,
+      area_name: 'Area A (Saheed Nagar)',
+      district: 'Bhubaneswar',
+      officer_name: 'Dr. Priya Das',
+      officer_designation: 'District Health Official',
+      report_title: 'Field Surveillance Directive: Vector-Borne Febrile Cluster in Saheed Nagar',
+      observed_signals: '{"fever_cases_surge": "+58% (7-Day)", "otc_paracetamol_demand": "+64%", "vector_larval_density": "High (Breteau Index 38)"}',
+      risk_level: 'HIGH',
+      clinical_notes: 'Door-to-door sentinel survey across 65 households in Sector 4 revealed clustered febrile illness with joint pain. Retail pharmacies report localized stockpiling of antipyretics.',
+      recommendations: '["Deploy municipal vector fogging in Sectors 3 & 4 immediately", "Set up daily fever screening triage booth at UPHC Saheed Nagar", "Distribute free ORS and paracetamol packets through ASHA workers", "Issue public advisory on eliminating stagnant water containers"]',
+      reported_date: new Date().toISOString().split('T')[0],
+      is_public: true,
+      created_at: new Date().toISOString(),
+    },
+  ];
+
   const loadReports = async () => {
     setLoading(true);
     try {
       const data = await api.getHealthReports();
-      setReports(data);
-      if (data.length > 0 && expandedReportId === null) {
-        setExpandedReportId(data[0].id);
+      if (Array.isArray(data)) {
+        setReports(data.length > 0 ? data : SAMPLE_REPORTS);
+        if (data.length > 0 && expandedReportId === null) {
+          setExpandedReportId(data[0].id);
+        }
+      } else {
+        setReports(SAMPLE_REPORTS);
       }
     } catch {
-      // Fallback sample reports
-      setReports([
-        {
-          id: 1,
-          area_id: 1,
-          area_name: 'Area A (Saheed Nagar)',
-          district: 'Bhubaneswar',
-          officer_name: 'Dr. Priya Das',
-          officer_designation: 'District Health Official',
-          report_title: 'Field Surveillance Directive: Vector-Borne Febrile Cluster in Saheed Nagar',
-          observed_signals: '{"fever_cases_surge": "+58% (7-Day)", "otc_paracetamol_demand": "+64%", "vector_larval_density": "High (Breteau Index 38)"}',
-          risk_level: 'HIGH',
-          clinical_notes: 'Door-to-door sentinel survey across 65 households in Sector 4 revealed clustered febrile illness with joint pain. Retail pharmacies report localized stockpiling of antipyretics.',
-          recommendations: '["Deploy municipal vector fogging in Sectors 3 & 4 immediately", "Set up daily fever screening triage booth at UPHC Saheed Nagar", "Distribute free ORS and paracetamol packets through ASHA workers", "Issue public advisory on eliminating stagnant water containers"]',
-          reported_date: new Date().toISOString().split('T')[0],
-          is_public: true,
-          created_at: new Date().toISOString(),
-        },
-      ]);
+      setReports(SAMPLE_REPORTS);
     } finally {
       setLoading(false);
     }
@@ -87,6 +92,7 @@ export const HealthReportsSection: React.FC<HealthReportsSectionProps> = ({
   };
 
   const parseSignals = (signalsStr: string): { key: string; value: string }[] => {
+    if (!signalsStr) return [{ key: 'Observation', value: 'None reported' }];
     try {
       const parsed = JSON.parse(signalsStr);
       if (Array.isArray(parsed)) {
@@ -100,19 +106,20 @@ export const HealthReportsSection: React.FC<HealthReportsSectionProps> = ({
       }
     } catch {
       // plain string split
-      return signalsStr.split(',').map((s, idx) => ({ key: `Signal ${idx + 1}`, value: s.trim() }));
+      return String(signalsStr).split(',').map((s, idx) => ({ key: `Signal ${idx + 1}`, value: s.trim() }));
     }
-    return [{ key: 'Observation', value: signalsStr }];
+    return [{ key: 'Observation', value: String(signalsStr) }];
   };
 
   const parseRecommendations = (recStr: string): string[] => {
+    if (!recStr) return ['Follow standard municipal health precautions.'];
     try {
       const parsed = JSON.parse(recStr);
       if (Array.isArray(parsed)) return parsed.map(String);
     } catch {
       // split by newline
     }
-    return recStr.split('\n').filter((s) => s.trim().length > 0);
+    return String(recStr).split('\n').filter((s) => s.trim().length > 0);
   };
 
   const playVoiceReport = (report: HealthReport) => {
@@ -129,9 +136,10 @@ export const HealthReportsSection: React.FC<HealthReportsSectionProps> = ({
     showToast('info', 'Playing Official Directive', `Audio playback started for ${report.area_name}`);
   };
 
-  const filteredReports = reports.filter((r) => {
+  const safeReports = Array.isArray(reports) ? reports : SAMPLE_REPORTS;
+  const filteredReports = safeReports.filter((r) => {
     if (filterRisk === 'ALL') return true;
-    return r.risk_level === filterRisk;
+    return r && r.risk_level === filterRisk;
   });
 
   return (
@@ -148,7 +156,7 @@ export const HealthReportsSection: React.FC<HealthReportsSectionProps> = ({
                 Official Ward Health Reports & Directives
               </h3>
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 font-bold uppercase tracking-wider">
-                {reports.length} Filed
+                {safeReports.length} Filed
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">

@@ -82,11 +82,10 @@ echo  - Frontend Dashboard: http://localhost:5173
 echo  - Backend API & Docs: http://127.0.0.1:8000/docs
 echo  - Health Endpoint:    http://127.0.0.1:8000/health
 echo -------------------------------------------------------------------------
-echo  Default Login Credentials:
-echo   - Admin:    admin@sih.gov.in    / Admin@12345
-echo   - Official: official@sih.gov.in / Official@12345
-echo   - Analyst:  analyst@sih.gov.in  / Analyst@12345
-echo   - Viewer:   viewer@sih.gov.in   / Viewer@12345
+echo  Default Login Credentials (3-Tier RBAC):
+echo   - 1. Admin:           admin@sih.gov.in    / Admin@12345
+echo   - 2. Health Official: official@sih.gov.in / Official@12345
+echo   - 3. Citizen / Viewer: viewer@sih.gov.in   / Viewer@12345
 echo =========================================================================
 echo.
 echo Note: The backend and frontend are running in separate terminal windows.

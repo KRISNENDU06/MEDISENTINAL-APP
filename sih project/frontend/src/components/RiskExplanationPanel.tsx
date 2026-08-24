@@ -106,12 +106,12 @@ export const RiskExplanationPanel: React.FC<RiskExplanationPanelProps> = ({
                 <Pill className="w-3.5 h-3.5 text-brand-400" />
                 Medicine Demand (30%)
               </span>
-              <span className="font-bold text-white">{signals.medicineDemand.deviation}</span>
+              <span className="font-bold text-white">{signals?.medicineDemand?.deviation || '+0%'}</span>
             </div>
             <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800">
               <div
                 className="bg-brand-500 h-full rounded-full transition-all duration-500"
-                style={{ width: `${Math.min(100, factorScores.medicine * 3.3)}%` }}
+                style={{ width: `${Math.min(100, (factorScores?.medicine || 0) * 3.3)}%` }}
               />
             </div>
           </div>
@@ -123,12 +123,12 @@ export const RiskExplanationPanel: React.FC<RiskExplanationPanelProps> = ({
                 <Thermometer className="w-3.5 h-3.5 text-rose-400" />
                 Fever & Health (30%)
               </span>
-              <span className="font-bold text-white">{signals.feverIndicators.deviation}</span>
+              <span className="font-bold text-white">{signals?.feverIndicators?.deviation || '+0%'}</span>
             </div>
             <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800">
               <div
                 className="bg-rose-500 h-full rounded-full transition-all duration-500"
-                style={{ width: `${Math.min(100, factorScores.healthIndicators * 3.3)}%` }}
+                style={{ width: `${Math.min(100, (factorScores?.healthIndicators || 0) * 3.3)}%` }}
               />
             </div>
           </div>
@@ -140,12 +140,12 @@ export const RiskExplanationPanel: React.FC<RiskExplanationPanelProps> = ({
                 <CheckCircle className="w-3.5 h-3.5 text-amber-400" />
                 Persistence (20%)
               </span>
-              <span className="font-bold text-white">{selectedArea.persistenceWeeks} wks abnormal</span>
+              <span className="font-bold text-white">{selectedArea?.persistenceWeeks || 0} wks abnormal</span>
             </div>
             <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800">
               <div
                 className="bg-amber-500 h-full rounded-full transition-all duration-500"
-                style={{ width: `${Math.min(100, factorScores.persistence * 5)}%` }}
+                style={{ width: `${Math.min(100, (factorScores?.persistence || 0) * 5)}%` }}
               />
             </div>
           </div>
@@ -157,12 +157,12 @@ export const RiskExplanationPanel: React.FC<RiskExplanationPanelProps> = ({
                 <Share2 className="w-3.5 h-3.5 text-purple-400" />
                 Geographic Spread (20%)
               </span>
-              <span className="font-bold text-white">{signals.geographicSpread.deviation}</span>
+              <span className="font-bold text-white">{signals?.geographicSpread?.deviation || '0%'}</span>
             </div>
             <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800">
               <div
                 className="bg-purple-500 h-full rounded-full transition-all duration-500"
-                style={{ width: `${Math.min(100, factorScores.geographicSpread * 5)}%` }}
+                style={{ width: `${Math.min(100, (factorScores?.geographicSpread || 0) * 5)}%` }}
               />
             </div>
           </div>

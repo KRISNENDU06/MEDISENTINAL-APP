@@ -138,17 +138,17 @@ export const AreaDrillDownModal: React.FC<AreaDrillDownModalProps> = ({
               </span>
             </div>
             <div className="mt-2 text-lg font-bold text-white">
-              {area.signals.medicineDemand.current}{' '}
+              {area?.signals?.medicineDemand?.current ?? 0}{' '}
               <span className="text-xs text-slate-400 font-normal">units</span>
             </div>
             <div className="mt-1 flex items-center justify-between text-[11px]">
-              <span className="text-slate-400">Baseline: {area.signals.medicineDemand.baseline}</span>
+              <span className="text-slate-400">Baseline: {area?.signals?.medicineDemand?.baseline ?? 0}</span>
               <span
                 className={`font-bold ${
-                  area.signals.medicineDemand.deviation.startsWith('+') ? 'text-amber-400' : 'text-emerald-400'
+                  (area?.signals?.medicineDemand?.deviation || '').startsWith('+') ? 'text-amber-400' : 'text-emerald-400'
                 }`}
               >
-                {area.signals.medicineDemand.deviation}
+                {area?.signals?.medicineDemand?.deviation || '+0%'}
               </span>
             </div>
           </div>
@@ -162,17 +162,17 @@ export const AreaDrillDownModal: React.FC<AreaDrillDownModalProps> = ({
               </span>
             </div>
             <div className="mt-2 text-lg font-bold text-white">
-              {area.signals.feverIndicators.current}{' '}
+              {area?.signals?.feverIndicators?.current ?? 0}{' '}
               <span className="text-xs text-slate-400 font-normal">cases</span>
             </div>
             <div className="mt-1 flex items-center justify-between text-[11px]">
-              <span className="text-slate-400">Baseline: {area.signals.feverIndicators.baseline}</span>
+              <span className="text-slate-400">Baseline: {area?.signals?.feverIndicators?.baseline ?? 0}</span>
               <span
                 className={`font-bold ${
-                  area.signals.feverIndicators.deviation.startsWith('+') ? 'text-rose-400' : 'text-emerald-400'
+                  (area?.signals?.feverIndicators?.deviation || '').startsWith('+') ? 'text-rose-400' : 'text-emerald-400'
                 }`}
               >
-                {area.signals.feverIndicators.deviation}
+                {area?.signals?.feverIndicators?.deviation || '+0%'}
               </span>
             </div>
           </div>
@@ -186,12 +186,12 @@ export const AreaDrillDownModal: React.FC<AreaDrillDownModalProps> = ({
               </span>
             </div>
             <div className="mt-2 text-lg font-bold text-white">
-              {area.signals.clinicVisits.current}{' '}
+              {area?.signals?.clinicVisits?.current ?? 0}{' '}
               <span className="text-xs text-slate-400 font-normal">visits</span>
             </div>
             <div className="mt-1 flex items-center justify-between text-[11px]">
-              <span className="text-slate-400">Baseline: {area.signals.clinicVisits.baseline}</span>
-              <span className="text-sky-400 font-bold">{area.signals.clinicVisits.deviation}</span>
+              <span className="text-slate-400">Baseline: {area?.signals?.clinicVisits?.baseline ?? 0}</span>
+              <span className="text-sky-400 font-bold">{area?.signals?.clinicVisits?.deviation || '+0%'}</span>
             </div>
           </div>
 
@@ -204,12 +204,12 @@ export const AreaDrillDownModal: React.FC<AreaDrillDownModalProps> = ({
               </span>
             </div>
             <div className="mt-2 text-lg font-bold text-white">
-              {area.signals.geographicSpread.affectedNeighbors} / {area.signals.geographicSpread.totalNeighbors}
+              {area?.signals?.geographicSpread?.affectedNeighbors ?? 0} / {area?.signals?.geographicSpread?.totalNeighbors ?? 0}
               <span className="text-xs text-slate-400 font-normal"> wards</span>
             </div>
             <div className="mt-1 flex items-center justify-between text-[11px]">
               <span className="text-slate-400">Adjacent elevated</span>
-              <span className="text-purple-400 font-bold">{area.signals.geographicSpread.deviation}</span>
+              <span className="text-purple-400 font-bold">{area?.signals?.geographicSpread?.deviation || '0%'}</span>
             </div>
           </div>
         </div>
