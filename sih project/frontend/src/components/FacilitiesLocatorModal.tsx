@@ -1240,6 +1240,8 @@ export const FacilitiesLocatorModal: React.FC<FacilitiesLocatorModalProps> = ({ 
                     </p>
                   </div>
 
+                  {/* Actions: Direct Call & View on Map */}
+                  <div className="flex items-center gap-2 shrink-0 pt-1 sm:pt-0">
                   {/* Actions: Direct Call & View on Map & GPS Navigation */}
                   <div className="flex flex-wrap items-center gap-2 shrink-0 pt-1 sm:pt-0">
                     {/* Direct Call Button */}
@@ -1252,16 +1254,21 @@ export const FacilitiesLocatorModal: React.FC<FacilitiesLocatorModalProps> = ({ 
                       <span>Call Now ({fac.phone})</span>
                     </a>
 
+                    {/* Accurate Map Navigation Button */}
                     {/* Accurate Live Turn-by-Turn Navigation Button */}
                     <a
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${fac.latitude},${fac.longitude}`}
                       href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
                         `${fac.name}, ${fac.address}, ${fac.district}, Odisha`
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
+                      className="flex items-center gap-1 px-3 py-2 bg-slate-800 hover:bg-slate-700 hover:text-emerald-300 text-slate-200 rounded-xl text-xs font-semibold border border-slate-700 transition-all shadow"
+                      title="Open GPS Turn-by-Turn Navigation in Google Maps"
                       className="flex items-center gap-1 px-3 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 hover:text-emerald-200 rounded-xl text-xs font-bold border border-emerald-500/40 transition-all shadow"
                       title="Start GPS Turn-by-Turn Navigation directly to this hospital/pharmacy"
                     >
+                      <Navigation className="w-3.5 h-3.5 text-emerald-400" />
                       <Navigation className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
                       <span>Navigate</span>
                     </a>
