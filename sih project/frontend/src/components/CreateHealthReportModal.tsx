@@ -34,11 +34,11 @@ export const CreateHealthReportModal: React.FC<CreateHealthReportModalProps> = (
   areas,
   onReportCreated,
 }) => {
-  const { user } = useAuth();
+  const { user, isAdmin, isHealthOfficial, quickLogin } = useAuth();
   const { showToast } = useToast();
 
-  const [selectedAreaId, setSelectedAreaId] = useState<number>(
-    areas.length > 0 ? parseInt(areas[0].id.replace('area-', '')) || 1 : 1
+  const [selectedAreaKey, setSelectedAreaKey] = useState<string>(
+    areas.length > 0 ? areas[0].name : 'Angul Town Ward 8 (Nalco Nagar)'
   );
   const [reportTitle, setReportTitle] = useState<string>('Field Directive: Surveillance Assessment & Preventive Protocol');
   const [riskLevel, setRiskLevel] = useState<'LOW' | 'MEDIUM' | 'HIGH'>('HIGH');
@@ -115,15 +115,35 @@ export const CreateHealthReportModal: React.FC<CreateHealthReportModalProps> = (
 
     setSubmitting(true);
     try {
+      // Auto-authenticate as Health Official if currently in viewer mode
+      if (!isAdmin && !isHealthOfficial) {
+        const loggedIn = await quickLogin('HEALTH_OFFICIAL');
+        if (!loggedIn) {
+          showToast('error', 'Authentication Required', 'Please log in as Health Official or Admin.');
+          setSubmitting(false);
+          return;
+        }
+      }
+
+      const matchingArea =
+        areas.find((a) => a.name === selectedAreaKey || a.id === selectedAreaKey) ||
+        areas[0];
+      const numericAreaId =
+        typeof matchingArea?.id === 'number'
+          ? matchingArea.id
+          : parseInt(String(matchingArea?.id).replace(/\D/g, '')) || undefined;
+
       await api.createHealthReport({
-        area_id: selectedAreaId,
+        area_id: numericAreaId,
+        area_name: matchingArea?.name || selectedAreaKey,
         report_title: reportTitle.trim(),
         observed_signals: selectedSignals,
         risk_level: riskLevel,
         clinical_notes: clinicalNotes.trim(),
         recommendations: recommendations,
-        officer_name: user?.full_name || 'Dr. Priya Das',
-        officer_designation: user?.role === 'ADMIN' ? 'Chief Medical Administrator' : 'District Health Official',
+        officer_name: user?.full_name || 'Dr. Priya Das (District Health Official)',
+        officer_designation:
+          user?.role === 'ADMIN' ? 'Chief Medical Administrator' : 'District Health Official',
         is_public: true,
       });
 
@@ -170,6 +190,26 @@ export const CreateHealthReportModal: React.FC<CreateHealthReportModalProps> = (
 
         {/* Body Form */}
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-5">
+          {/* Auth Banner for Viewer Mode */}
+          {!isAdmin && !isHealthOfficial && (
+            <div className="p-3.5 bg-blue-950/40 border border-blue-500/40 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-blue-200">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-blue-400 shrink-0" />
+                <span>You are in Public Mode. Publishing will automatically verify you as <strong>District Health Official</strong>.</span>
+              </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  await quickLogin('HEALTH_OFFICIAL');
+                  showToast('success', 'Health Official Session Active', 'Logged in as Dr. Priya Das (District Health Official)');
+                }}
+                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-[11px] whitespace-nowrap shadow-md transition-all active:scale-95"
+              >
+                1-Click Auth as Health Official
+              </button>
+            </div>
+          )}
+
           {/* Row 1: Target Area & Risk Level */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -177,18 +217,15 @@ export const CreateHealthReportModal: React.FC<CreateHealthReportModalProps> = (
                 Target Ward / Monitored Area *
               </label>
               <select
-                value={selectedAreaId}
-                onChange={(e) => setSelectedAreaId(parseInt(e.target.value))}
+                value={selectedAreaKey}
+                onChange={(e) => setSelectedAreaKey(e.target.value)}
                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-blue-500 font-medium"
               >
-                {areas.map((area) => {
-                  const numId = parseInt(area.id.replace('area-', '')) || 1;
-                  return (
-                    <option key={area.id} value={numId}>
-                      {area.name} ({area.district})
-                    </option>
-                  );
-                })}
+                {areas.map((area) => (
+                  <option key={area.id} value={area.name}>
+                    {area.name} ({area.district})
+                  </option>
+                ))}
               </select>
             </div>
 

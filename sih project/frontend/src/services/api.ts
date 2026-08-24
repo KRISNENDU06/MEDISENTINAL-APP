@@ -433,9 +433,10 @@ export interface HealthReport {
 export interface Facility {
   id: string;
   name: string;
-  type: 'UPHC' | 'HOSPITAL' | 'PHARMACY';
+  type: 'UPHC' | 'HOSPITAL' | 'PHARMACY' | string;
   category: string;
   district: string;
+  ward?: string;
   address: string;
   latitude: number;
   longitude: number;

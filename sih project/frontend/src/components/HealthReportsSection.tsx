@@ -183,15 +183,18 @@ export const HealthReportsSection: React.FC<HealthReportsSectionProps> = ({
             ))}
           </div>
 
-          {canCreateReport && (
-            <button
-              onClick={onOpenFileReportModal}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 border border-blue-400/30 shadow-lg shadow-blue-950/50 transition-all active:scale-95"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>+ File Official Health Report</span>
-            </button>
-          )}
+          <button
+            onClick={onOpenFileReportModal}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 border border-blue-400/30 shadow-lg shadow-blue-950/50 transition-all active:scale-95"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>+ File Official Health Report</span>
+            {!canCreateReport && (
+              <span className="text-[9px] px-1.5 py-0.2 rounded-md bg-blue-900/80 border border-blue-400/40 text-blue-200 uppercase font-semibold">
+                Officer Auth
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
