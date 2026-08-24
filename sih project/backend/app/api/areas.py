@@ -29,6 +29,9 @@ HEALTH_FACILITIES = [
         "category": "Govt District Hospital",
         "district": "Angul",
         "ward": "Angul Town Ward 8 (Nalco Nagar)",
+        "address": "Hospital Road, Near Collectorate, Angul Town",
+        "latitude": 20.8444,
+        "longitude": 85.1511,
         "address": "Hospital Road, Near Collectorate, Angul Town, 759122",
         "latitude": 20.8427,
         "longitude": 85.1436,
@@ -61,6 +64,9 @@ HEALTH_FACILITIES = [
         "category": "Govt Sub-Divisional Hospital",
         "district": "Angul",
         "ward": "Pallahara Sub-Division CHC",
+        "address": "Main Road, Pallahara, Angul",
+        "latitude": 21.4333,
+        "longitude": 85.2000,
         "address": "Main Road, Pallahara Town, Angul, 759119",
         "latitude": 21.4338,
         "longitude": 85.2012,
@@ -71,12 +77,14 @@ HEALTH_FACILITIES = [
         "verifiedStock": "Adequate Stock",
     },
     {
+        "id": "fac-ang-3",
         "id": "fac-ang-4",
         "name": "Primary Health Centre (PHC) Khalari",
         "type": "UPHC",
         "category": "Govt Rural PHC",
         "district": "Angul",
         "ward": "Khalari Rural Catchment PHC",
+        "address": "Village Post Khalari, Block Angul",
         "address": "Village Post Khalari, Block Angul, 759128",
         "latitude": 20.9167,
         "longitude": 85.0833,
@@ -88,11 +96,20 @@ HEALTH_FACILITIES = [
         "verifiedStock": "High (Paracetamol & ORS Ready)",
     },
     {
+        "id": "fac-ang-4",
+        "name": "Sub-Divisional Hospital (SDH) Talcher",
         "id": "fac-ang-5",
         "name": "Jindal Sanjeevani Multispeciality Hospital",
         "type": "HOSPITAL",
+        "category": "Govt Sub-Divisional Hospital",
         "category": "Private Multispeciality Hospital",
         "district": "Angul",
+        "ward": "Talcher Coalfield & Thermal Ward",
+        "address": "MCL Highway Road, Talcher",
+        "latitude": 20.9500,
+        "longitude": 85.2167,
+        "phone": "+91-6760-240108",
+        "helpline": "108",
         "ward": "JSPL Township (Nisha Zone)",
         "address": "JSPL Township, Chhendipada Road, Nisha, Angul, 759145",
         "latitude": 20.8854,
@@ -100,31 +117,46 @@ HEALTH_FACILITIES = [
         "phone": "+91-6764-301500",
         "helpline": "06764-301500",
         "isOpen24x7": True,
+        "services": ["24/7 Trauma Care", "Industrial Dust & Respiratory Clinic", "Burn Unit", "Blood Storage"],
+        "verifiedStock": "High (Inhalers & Critical Care Meds)",
         "services": ["24/7 Intensive Care (ICU)", "Cardiac & Trauma Care", "CT-Scan & Diagnostics", "Private Ambulance"],
         "verifiedStock": "Fully Equipped (Advanced Emergency Drugs)",
     },
     {
+        "id": "fac-ang-5",
+        "name": "NTPC Kaniha Community Hospital",
         "id": "fac-ang-6",
         "name": "Tara Hospital & Trauma Centre",
         "type": "HOSPITAL",
+        "category": "Govt / PSU Hospital",
         "category": "Private Hospital",
         "district": "Angul",
+        "ward": "Kaniha NTPC Township Ward",
+        "address": "NTPC Township, Kaniha",
+        "latitude": 21.0833,
+        "longitude": 85.0500,
+        "phone": "+91-6760-243200",
+        "helpline": "108",
         "ward": "Amala Pada Town",
         "address": "Amala Pada Main Road, Angul, 759122",
         "latitude": 20.8385,
         "longitude": 85.1482,
         "phone": "+91-6764-232244",
         "isOpen24x7": True,
+        "services": ["24/7 Emergency & ICU", "General Medicine", "Pediatric Care"],
+        "verifiedStock": "Fully Stocked",
         "services": ["24/7 Emergency Casualty", "General Surgery", "Inpatient Beds"],
         "verifiedStock": "Adequate Stock",
     },
     {
+        "id": "fac-ang-6",
         "id": "fac-ang-7",
         "name": "Sanjeevani 24/7 Pharmacy & Emergency Meds",
         "type": "PHARMACY",
         "category": "24/7 Retail Pharmacy",
         "district": "Angul",
         "ward": "Angul Town Ward 8 (Nalco Nagar)",
+        "address": "Main Daily Market Square, Angul",
         "address": "Main Daily Market Square, Angul Town, 759122",
         "latitude": 20.8420,
         "longitude": 85.1530,
@@ -134,12 +166,14 @@ HEALTH_FACILITIES = [
         "verifiedStock": "Verified Available",
     },
     {
+        "id": "fac-ang-7",
         "id": "fac-ang-8",
         "name": "Apollo Pharmacy 24/7 Talcher",
         "type": "PHARMACY",
         "category": "24/7 Retail Pharmacy",
         "district": "Angul",
         "ward": "Talcher Coalfield & Thermal Ward",
+        "address": "Hatatota Main Chowk, Talcher",
         "address": "Hatatota Main Chowk, Talcher, 759100",
         "latitude": 20.9520,
         "longitude": 85.2190,
@@ -148,6 +182,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Prescription Dispensing", "Antibiotics & Antivirals", "Home Delivery"],
         "verifiedStock": "Verified Available",
     },
+
+    # 2. Khordha / Bhubaneswar
     {
         "id": "fac-khu-1",
         "name": "AIIMS Bhubaneswar (Apex Referral Institute)",
@@ -155,6 +191,9 @@ HEALTH_FACILITIES = [
         "category": "National Premier Institute",
         "district": "Khurda",
         "ward": "Dumduma (Ward 62 - Sijua)",
+        "address": "Sijua, Patrapada, Bhubaneswar",
+        "latitude": 20.2285,
+        "longitude": 85.7765,
         "address": "Sijua, Patrapada, Bhubaneswar, 751019",
         "latitude": 20.2312,
         "longitude": 85.7745,
@@ -171,6 +210,7 @@ HEALTH_FACILITIES = [
         "category": "Govt District Hospital",
         "district": "Khurda",
         "ward": "Old Town & Unit 6",
+        "address": "Unit 6, Near AG Square, Bhubaneswar",
         "address": "Unit 6, Near AG Square, Bhubaneswar, 751001",
         "latitude": 20.2644,
         "longitude": 85.8281,
@@ -182,11 +222,15 @@ HEALTH_FACILITIES = [
     },
     {
         "id": "fac-khu-3",
+        "name": "Apollo Hospital Bhubaneswar",
         "name": "Apollo Hospitals Bhubaneswar",
         "type": "HOSPITAL",
         "category": "Private Multispeciality Hospital",
         "district": "Khurda",
         "ward": "Saheed Nagar / Sainik School",
+        "address": "Plot 251, Sainik School Road, Bhubaneswar",
+        "latitude": 20.3080,
+        "longitude": 85.8320,
         "address": "Plot 251, Sainik School Road, Unit 15, Bhubaneswar, 751005",
         "latitude": 20.3082,
         "longitude": 85.8324,
@@ -203,6 +247,9 @@ HEALTH_FACILITIES = [
         "category": "Private Multispeciality Hospital",
         "district": "Khurda",
         "ward": "Khandagiri / Ghatikia",
+        "address": "K8, Kalinga Nagar, Ghatikia, Bhubaneswar",
+        "latitude": 20.2780,
+        "longitude": 85.7650,
         "address": "K-8, Kalinga Nagar, Ghatikia, Bhubaneswar, 751003",
         "latitude": 20.2785,
         "longitude": 85.7656,
@@ -235,6 +282,7 @@ HEALTH_FACILITIES = [
         "category": "Government Clinic",
         "district": "Khurda",
         "ward": "Saheed Nagar (Ward 29)",
+        "address": "Plot 42, Near BMC Community Hall, Saheed Nagar",
         "address": "Plot 42, Near BMC Community Hall, Saheed Nagar, Bhubaneswar, 751007",
         "latitude": 20.2925,
         "longitude": 85.8475,
@@ -245,12 +293,31 @@ HEALTH_FACILITIES = [
         "verifiedStock": "High (Paracetamol, ORS, IV Fluids available)",
     },
     {
+        "id": "fac-khu-6",
+        "name": "UPHC Nayapalli & IRC Village Clinic",
+        "type": "UPHC",
+        "category": "Government Clinic",
+        "district": "Khurda",
+        "ward": "Nayapalli (IRC Village)",
+        "address": "Sector 4, IRC Village, Nayapalli",
+        "latitude": 20.3000,
+        "longitude": 85.8150,
+        "phone": "+91-674-2558710",
+        "helpline": "104",
+        "isOpen24x7": False,
+        "operatingHours": "8:00 AM - 8:00 PM",
+        "services": ["Outpatient Screen", "Vaccination", "Fever Clinic"],
+        "verifiedStock": "Adequate Stock",
+    },
+    {
         "id": "fac-khu-7",
+        "name": "Apollo 24/7 Pharmacy Master Canteen",
         "name": "Apollo Pharmacy 24/7 Master Canteen",
         "type": "PHARMACY",
         "category": "24/7 Retail Pharmacy",
         "district": "Khurda",
         "ward": "Master Canteen / Station Square",
+        "address": "Shop 12, Master Canteen Square, Bhubaneswar",
         "address": "Shop 12, Master Canteen Square, Bhubaneswar, 751001",
         "latitude": 20.2685,
         "longitude": 85.8402,
@@ -266,6 +333,7 @@ HEALTH_FACILITIES = [
         "category": "24/7 Retail Pharmacy",
         "district": "Khurda",
         "ward": "Patia (InfoCity Zone)",
+        "address": "KIIT Road, Near Patia Station, Bhubaneswar",
         "address": "KIIT Road, Near Patia Station, Bhubaneswar, 751024",
         "latitude": 20.3540,
         "longitude": 85.8190,
@@ -274,6 +342,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Emergency Medicines", "Thermometers & Oximeters", "Water Purification Tablets"],
         "verifiedStock": "Verified Stock (Ample Supply)",
     },
+
+    # 3. Cuttack
     {
         "id": "fac-cut-1",
         "name": "SCB Medical College & Apex Government Hospital",
@@ -281,6 +351,7 @@ HEALTH_FACILITIES = [
         "category": "Govt Medical College",
         "district": "Cuttack",
         "ward": "Mangalabag & SCB Medical Zone",
+        "address": "Mangalabag, Cuttack",
         "address": "Mangalabag, Cuttack, 753007",
         "latitude": 20.4625,
         "longitude": 85.8830,
@@ -292,6 +363,7 @@ HEALTH_FACILITIES = [
     },
     {
         "id": "fac-cut-2",
+        "name": "Ashwini Hospital Cuttack",
         "name": "City Hospital (DHH Cuttack)",
         "type": "HOSPITAL",
         "category": "Govt District Hospital",
@@ -313,6 +385,9 @@ HEALTH_FACILITIES = [
         "category": "Private Multispeciality Hospital",
         "district": "Cuttack",
         "ward": "CDA Sector 6 (Bidanasi)",
+        "address": "Sector 1, CDA, Cuttack",
+        "latitude": 20.4850,
+        "longitude": 85.8450,
         "address": "Sector 1, CDA, Cuttack, 753014",
         "latitude": 20.4852,
         "longitude": 85.8454,
@@ -323,6 +398,7 @@ HEALTH_FACILITIES = [
         "verifiedStock": "Fully Stocked",
     },
     {
+        "id": "fac-cut-3",
         "id": "fac-cut-4",
         "name": "Sun Hospital Cuttack",
         "type": "HOSPITAL",
@@ -344,6 +420,7 @@ HEALTH_FACILITIES = [
         "category": "24/7 Retail Pharmacy",
         "district": "Cuttack",
         "ward": "Badambadi & Ranihat Zone",
+        "address": "Ranihat Square, Medical Road, Cuttack",
         "address": "Ranihat Square, Medical Road, Cuttack, 753007",
         "latitude": 20.4650,
         "longitude": 85.8750,
@@ -352,6 +429,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Emergency Lifesaving Drugs", "Surgical Supplies", "ORS Packets"],
         "verifiedStock": "Verified High",
     },
+
+    # 4. Puri
     {
         "id": "fac-cut-6",
         "name": "Apollo Pharmacy 24/7 Mangalabag",
@@ -374,6 +453,7 @@ HEALTH_FACILITIES = [
         "category": "Govt District Hospital",
         "district": "Puri",
         "ward": "Grand Road (Bada Danda)",
+        "address": "Grand Road, Near Jagannath Temple, Puri",
         "address": "Grand Road, Near Jagannath Temple, Puri, 752001",
         "latitude": 19.8135,
         "longitude": 85.8312,
@@ -421,6 +501,9 @@ HEALTH_FACILITIES = [
         "category": "24/7 Retail Pharmacy",
         "district": "Puri",
         "ward": "VIP Road Marine Drive",
+        "address": "VIP Road, Near Medical Chowk, Puri",
+        "latitude": 19.8100,
+        "longitude": 85.8250,
         "address": "VIP Road, Near Medical Chowk, Puri, 752001",
         "latitude": 19.8105,
         "longitude": 85.8255,
@@ -429,6 +512,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 OTC Medicines", "First Aid", "Hydration Salts"],
         "verifiedStock": "Verified Ready",
     },
+
+    # 5. Sundargarh / Rourkela
     {
         "id": "fac-sun-1",
         "name": "Ispat General Hospital (IGH Rourkela)",
@@ -436,6 +521,9 @@ HEALTH_FACILITIES = [
         "category": "PSU / Govt Multispeciality",
         "district": "Sundargarh",
         "ward": "Rourkela Sector 4 Steel Township",
+        "address": "Sector 19, Steel Township, Rourkela",
+        "latitude": 22.2500,
+        "longitude": 84.8500,
         "address": "Sector 19, Steel Township, Rourkela, 769005",
         "latitude": 22.2514,
         "longitude": 84.8512,
@@ -452,6 +540,9 @@ HEALTH_FACILITIES = [
         "category": "Govt District Hospital",
         "district": "Sundargarh",
         "ward": "Civil Township / Uditnagar",
+        "address": "Panposh Road, Uditnagar, Rourkela",
+        "latitude": 22.2280,
+        "longitude": 84.8400,
         "address": "Panposh Road, Uditnagar, Rourkela, 769012",
         "latitude": 22.2285,
         "longitude": 84.8405,
@@ -484,6 +575,9 @@ HEALTH_FACILITIES = [
         "category": "24/7 Retail Pharmacy",
         "district": "Sundargarh",
         "ward": "Civil Township / Uditnagar",
+        "address": "Bisra Road, Near Railway Station, Rourkela",
+        "latitude": 22.2250,
+        "longitude": 84.8520,
         "address": "Bisra Road, Near Railway Station, Rourkela, 769001",
         "latitude": 22.2255,
         "longitude": 84.8525,
@@ -492,6 +586,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Emergency Drugs", "Nebulizers", "Oxygen Cans"],
         "verifiedStock": "Verified Available",
     },
+
+    # 6. Sambalpur
     {
         "id": "fac-sam-1",
         "name": "VIMSAR Medical College & Hospital Burla",
@@ -499,6 +595,9 @@ HEALTH_FACILITIES = [
         "category": "Govt Apex Medical College",
         "district": "Sambalpur",
         "ward": "Burla (VIMSAR Medical Zone)",
+        "address": "Hospital Road, Burla, Sambalpur",
+        "latitude": 21.5000,
+        "longitude": 83.8700,
         "address": "Hospital Road, Burla, Sambalpur, 768017",
         "latitude": 21.5015,
         "longitude": 83.8725,
@@ -546,6 +645,9 @@ HEALTH_FACILITIES = [
         "category": "24/7 Retail Pharmacy",
         "district": "Sambalpur",
         "ward": "Dhanupali & Ainthapali Ward",
+        "address": "Budharaja Square, Sambalpur",
+        "latitude": 21.4700,
+        "longitude": 83.9800,
         "address": "Budharaja Square, Sambalpur, 768004",
         "latitude": 21.4705,
         "longitude": 83.9805,
@@ -554,6 +656,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Medicines", "Baby Care & Rehydration", "First Aid"],
         "verifiedStock": "High",
     },
+
+    # 7. Balasore
     {
         "id": "fac-bal-1",
         "name": "Fakir Mohan Medical College & Hospital",
@@ -561,6 +665,9 @@ HEALTH_FACILITIES = [
         "category": "Govt Medical College",
         "district": "Balasore",
         "ward": "Balasore Station & Town Ward",
+        "address": "Remuna Golei, Balasore",
+        "latitude": 21.4934,
+        "longitude": 86.9135,
         "address": "Remuna Golei, Balasore, 756019",
         "latitude": 21.4938,
         "longitude": 86.9138,
@@ -608,6 +715,9 @@ HEALTH_FACILITIES = [
         "category": "24/7 Retail Pharmacy",
         "district": "Balasore",
         "ward": "Balasore Station & Town Ward",
+        "address": "Cinema Chhak, OT Road, Balasore",
+        "latitude": 21.4950,
+        "longitude": 86.9300,
         "address": "Cinema Chhak, OT Road, Balasore, 756001",
         "latitude": 21.4955,
         "longitude": 86.9305,
@@ -616,6 +726,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Antibiotics & Antipyretics", "Rapid Testing Kits"],
         "verifiedStock": "Verified Available",
     },
+
+    # 8. Ganjam / Berhampur
     {
         "id": "fac-gan-1",
         "name": "MKCG Medical College & Hospital",
@@ -623,6 +735,9 @@ HEALTH_FACILITIES = [
         "category": "Govt Apex Medical College",
         "district": "Ganjam",
         "ward": "Berhampur (MKCG Hospital Zone)",
+        "address": "Medical College Campus, Berhampur, Ganjam",
+        "latitude": 19.3150,
+        "longitude": 84.7941,
         "address": "Medical College Campus, Berhampur, Ganjam, 760004",
         "latitude": 19.3155,
         "longitude": 84.7945,
@@ -670,6 +785,9 @@ HEALTH_FACILITIES = [
         "category": "24/7 Retail Pharmacy",
         "district": "Ganjam",
         "ward": "Berhampur (MKCG Hospital Zone)",
+        "address": "Giri Road, Medical Square, Berhampur",
+        "latitude": 19.3120,
+        "longitude": 84.7920,
         "address": "Giri Road, Medical Square, Berhampur, 760001",
         "latitude": 19.3125,
         "longitude": 84.7925,
@@ -678,6 +796,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 OTC Antipyretics", "ORS & Pediatric Hydration"],
         "verifiedStock": "High",
     },
+
+    # 9. Bhadrak
     {
         "id": "fac-bha-1",
         "name": "District Headquarters Hospital (DHH) Bhadrak",
@@ -685,6 +805,9 @@ HEALTH_FACILITIES = [
         "category": "Govt District Hospital",
         "district": "Bhadrak",
         "ward": "Bhadrak Puruna Bazar",
+        "address": "Puruna Bazar Road, Bhadrak",
+        "latitude": 21.0574,
+        "longitude": 86.4950,
         "address": "Puruna Bazar Road, Bhadrak, 756100",
         "latitude": 21.0578,
         "longitude": 86.4955,
@@ -716,6 +839,9 @@ HEALTH_FACILITIES = [
         "category": "24/7 Retail Pharmacy",
         "district": "Bhadrak",
         "ward": "Bhadrak Puruna Bazar",
+        "address": "Bonth Chhak, Bhadrak",
+        "latitude": 21.0600,
+        "longitude": 86.5000,
         "address": "Bonth Chhak, Bhadrak, 756100",
         "latitude": 21.0605,
         "longitude": 86.5005,
@@ -724,6 +850,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Medicines", "ORS Tablets", "Antipyretics"],
         "verifiedStock": "Verified Available",
     },
+
+    # 10. Mayurbhanj
     {
         "id": "fac-may-1",
         "name": "PRM Medical College & Hospital Baripada",
@@ -731,6 +859,9 @@ HEALTH_FACILITIES = [
         "category": "Govt Medical College",
         "district": "Mayurbhanj",
         "ward": "Baripada Palbani Heritage Ward",
+        "address": "Palbani, Baripada, Mayurbhanj",
+        "latitude": 21.9322,
+        "longitude": 86.7262,
         "address": "Palbani, Baripada, Mayurbhanj, 757001",
         "latitude": 21.9325,
         "longitude": 86.7265,
@@ -778,6 +909,9 @@ HEALTH_FACILITIES = [
         "category": "24/7 Retail Pharmacy",
         "district": "Mayurbhanj",
         "ward": "Baripada Palbani Heritage Ward",
+        "address": "Station Road, Baripada",
+        "latitude": 21.9300,
+        "longitude": 86.7300,
         "address": "Station Road, Baripada, 757001",
         "latitude": 21.9305,
         "longitude": 86.7305,
@@ -786,6 +920,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Emergency Drugs", "Anti-Venom & Antipyretics"],
         "verifiedStock": "High",
     },
+
+    # 11. Keonjhar
     {
         "id": "fac-keo-1",
         "name": "Dharanidhar Medical College & Hospital",
@@ -793,6 +929,9 @@ HEALTH_FACILITIES = [
         "category": "Govt Medical College",
         "district": "Keonjhar",
         "ward": "Keonjhar District Town",
+        "address": "Hospital Road, Keonjhar Town",
+        "latitude": 21.6289,
+        "longitude": 85.5817,
         "address": "Hospital Road, Keonjhar Town, 758001",
         "latitude": 21.6292,
         "longitude": 85.5821,
@@ -802,6 +941,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Emergency & ICU", "Mining Belt Pulmonary Clinic", "Blood Bank"],
         "verifiedStock": "Fully Stocked",
     },
+
+    # 12. Jharsuguda
     {
         "id": "fac-keo-2",
         "name": "JSPL Community Hospital Barbil",
@@ -839,6 +980,9 @@ HEALTH_FACILITIES = [
         "category": "Govt District Hospital",
         "district": "Jharsuguda",
         "ward": "Jharsuguda Industrial Ward",
+        "address": "Industrial Bypass Road, Jharsuguda",
+        "latitude": 21.8554,
+        "longitude": 84.0062,
         "address": "Industrial Bypass Road, Jharsuguda, 768201",
         "latitude": 21.8558,
         "longitude": 84.0065,
@@ -848,6 +992,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Emergency", "Trauma Care", "Free Diagnostic Services"],
         "verifiedStock": "Adequate Stock",
     },
+
+    # 13. Koraput
     {
         "id": "fac-jha-2",
         "name": "St. Joseph Hospital & Trauma Centre",
@@ -885,6 +1031,9 @@ HEALTH_FACILITIES = [
         "category": "Govt Apex Medical College",
         "district": "Koraput",
         "ward": "Koraput Hill Town HQ",
+        "address": "Medical College Road, Koraput",
+        "latitude": 18.8135,
+        "longitude": 82.7123,
         "address": "Medical College Road, Koraput, 764020",
         "latitude": 18.8138,
         "longitude": 82.7126,
@@ -932,6 +1081,9 @@ HEALTH_FACILITIES = [
         "category": "24/7 Retail Pharmacy",
         "district": "Koraput",
         "ward": "Jeypore Main Commercial Ward",
+        "address": "Main Road, Near Bus Stand, Jeypore",
+        "latitude": 18.8500,
+        "longitude": 82.5700,
         "address": "Main Road, Near Bus Stand, Jeypore, 764001",
         "latitude": 18.8505,
         "longitude": 82.5705,
@@ -940,6 +1092,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 OTC Medicines", "ORS & Antipyretics"],
         "verifiedStock": "High",
     },
+
+    # 14. Rayagada
     {
         "id": "fac-ray-1",
         "name": "District Headquarters Hospital Rayagada",
@@ -947,6 +1101,9 @@ HEALTH_FACILITIES = [
         "category": "Govt District Hospital",
         "district": "Rayagada",
         "ward": "Rayagada Town Ward",
+        "address": "Main Hospital Road, Rayagada",
+        "latitude": 19.1678,
+        "longitude": 83.4158,
         "address": "Main Hospital Road, Rayagada, 765001",
         "latitude": 19.1682,
         "longitude": 83.4162,
@@ -956,6 +1113,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Emergency", "Diarrhea Treatment Ward", "Blood Storage"],
         "verifiedStock": "High",
     },
+
+    # 15. Kalahandi
     {
         "id": "fac-ray-2",
         "name": "JK Paper Mills Community Hospital",
@@ -993,6 +1152,9 @@ HEALTH_FACILITIES = [
         "category": "Govt Medical College",
         "district": "Kalahandi",
         "ward": "Bhawanipatna District Town",
+        "address": "Bhangabari, Bhawanipatna, Kalahandi",
+        "latitude": 19.9075,
+        "longitude": 83.1656,
         "address": "Bhangabari, Bhawanipatna, Kalahandi, 766001",
         "latitude": 19.9078,
         "longitude": 83.1659,
@@ -1002,6 +1164,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Emergency & ICU", "Maternity Wing", "Pathology Lab"],
         "verifiedStock": "Fully Stocked",
     },
+
+    # 16. Bolangir
     {
         "id": "fac-kal-2",
         "name": "Lifeline Multispeciality Hospital Kalahandi",
@@ -1039,6 +1203,9 @@ HEALTH_FACILITIES = [
         "category": "Govt Medical College",
         "district": "Bolangir",
         "ward": "Bolangir Town Ward",
+        "address": "Medical College Road, Bolangir",
+        "latitude": 20.7107,
+        "longitude": 83.4867,
         "address": "Medical College Road, Bolangir, 767001",
         "latitude": 20.7112,
         "longitude": 83.4871,
@@ -1048,6 +1215,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Emergency", "ICU & Critical Care", "Blood Bank"],
         "verifiedStock": "Fully Stocked",
     },
+
+    # 17. Bargarh
     {
         "id": "fac-bol-2",
         "name": "Rukmani Hospital & Surgical Care Bolangir",
@@ -1085,6 +1254,9 @@ HEALTH_FACILITIES = [
         "category": "Govt District Hospital",
         "district": "Bargarh",
         "ward": "Bargarh Town Ward",
+        "address": "Khedapali Road, Bargarh",
+        "latitude": 21.3333,
+        "longitude": 83.6167,
         "address": "Khedapali Road, Bargarh, 768028",
         "latitude": 21.3338,
         "longitude": 83.6171,
@@ -1094,6 +1266,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Emergency", "Dialysis Centre", "Fever Clinic"],
         "verifiedStock": "High",
     },
+
+    # 18. Dhenkanal
     {
         "id": "fac-bar-2",
         "name": "Vikas Hospital & Trauma Centre Bargarh",
@@ -1131,6 +1305,9 @@ HEALTH_FACILITIES = [
         "category": "Govt District Hospital",
         "district": "Dhenkanal",
         "ward": "Dhenkanal Town Ward",
+        "address": "Station Road, Dhenkanal",
+        "latitude": 20.6586,
+        "longitude": 85.5967,
         "address": "Station Road, Dhenkanal, 759001",
         "latitude": 20.6589,
         "longitude": 85.5971,
@@ -1140,6 +1317,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Emergency", "Maternity Ward", "Free Diagnostics"],
         "verifiedStock": "Adequate Stock",
     },
+
+    # 19. Jajpur
     {
         "id": "fac-dhe-2",
         "name": "Shree Jagannath Multispeciality Hospital Dhenkanal",
@@ -1177,6 +1356,9 @@ HEALTH_FACILITIES = [
         "category": "Govt Medical College",
         "district": "Jajpur",
         "ward": "Jajpur Town Ward",
+        "address": "Ankula, Jajpur Town",
+        "latitude": 20.8522,
+        "longitude": 86.3333,
         "address": "Ankula, Jajpur Town, 755001",
         "latitude": 20.8526,
         "longitude": 86.3337,
@@ -1186,6 +1368,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Emergency & ICU", "Trauma Unit", "Blood Bank"],
         "verifiedStock": "Fully Stocked",
     },
+
+    # 20. Kendrapara
     {
         "id": "fac-jaj-2",
         "name": "Tata Steel Medica Hospital Kalinganagar",
@@ -1223,6 +1407,9 @@ HEALTH_FACILITIES = [
         "category": "Govt District Hospital",
         "district": "Kendrapara",
         "ward": "Kendrapara Town Ward",
+        "address": "Hospital Road, Kendrapara",
+        "latitude": 20.4994,
+        "longitude": 86.4230,
         "address": "Hospital Road, Kendrapara, 754211",
         "latitude": 20.4998,
         "longitude": 86.4234,
@@ -1232,6 +1419,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Emergency", "Cyclone & Epidemic Medical Unit", "Pathology"],
         "verifiedStock": "High",
     },
+
+    # 21. Jagatsinghpur
     {
         "id": "fac-ken-2",
         "name": "Kalyani Hospital & Diagnostic Centre Kendrapara",
@@ -1269,6 +1458,9 @@ HEALTH_FACILITIES = [
         "category": "Govt District Hospital",
         "district": "Jagatsinghpur",
         "ward": "Jagatsinghpur Town Ward",
+        "address": "Hospital Chhak, Jagatsinghpur",
+        "latitude": 20.2667,
+        "longitude": 86.1667,
         "address": "Hospital Chhak, Jagatsinghpur, 754103",
         "latitude": 20.2672,
         "longitude": 86.1672,
@@ -1285,6 +1477,9 @@ HEALTH_FACILITIES = [
         "category": "Govt Port Hospital",
         "district": "Jagatsinghpur",
         "ward": "Paradip Port & Refinery Ward",
+        "address": "Port Trust Road, Paradip",
+        "latitude": 20.3167,
+        "longitude": 86.6167,
         "address": "Port Trust Road, Paradip, 754142",
         "latitude": 20.3172,
         "longitude": 86.6172,
@@ -1294,6 +1489,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Port Emergency", "Industrial Trauma Hub", "Ambulance Station"],
         "verifiedStock": "High",
     },
+
+    # 22. Nayagarh
     {
         "id": "fac-jag-3",
         "name": "Paradip 24/7 Emergency Medicals",
@@ -1316,6 +1513,9 @@ HEALTH_FACILITIES = [
         "category": "Govt District Hospital",
         "district": "Nayagarh",
         "ward": "Nayagarh Town Ward",
+        "address": "Old Hospital Road, Nayagarh",
+        "latitude": 20.1333,
+        "longitude": 85.1000,
         "address": "Old Hospital Road, Nayagarh, 752069",
         "latitude": 20.1338,
         "longitude": 85.1005,
@@ -1325,6 +1525,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Emergency", "Surgical Wing", "Free Diagnostic Tests"],
         "verifiedStock": "Adequate Stock",
     },
+
+    # 23. Kandhamal
     {
         "id": "fac-nay-2",
         "name": "Nayagarh Multispeciality Hospital",
@@ -1362,6 +1564,9 @@ HEALTH_FACILITIES = [
         "category": "Govt District Hospital",
         "district": "Kandhamal",
         "ward": "Phulbani District Town",
+        "address": "Court Road, Phulbani, Kandhamal",
+        "latitude": 20.1333,
+        "longitude": 84.1500,
         "address": "Court Road, Phulbani, Kandhamal, 762001",
         "latitude": 20.1338,
         "longitude": 84.1505,
@@ -1371,6 +1576,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Emergency", "Tribal Health Outreach", "Malaria & Febrile Clinic"],
         "verifiedStock": "High (Anti-Malarials & ORS in Stock)",
     },
+
+    # 24. Boudh
     {
         "id": "fac-kan-2",
         "name": "Kandhamal Care Clinic & Emergency Aid",
@@ -1406,8 +1613,12 @@ HEALTH_FACILITIES = [
         "name": "District Headquarters Hospital Boudh",
         "type": "HOSPITAL",
         "category": "Govt District Hospital",
+        "district": "Boudh",
         "district": "Baudh",
         "ward": "Boudh Town Ward",
+        "address": "Hospital Road, Boudh",
+        "latitude": 20.8333,
+        "longitude": 84.3167,
         "address": "Hospital Road, Boudh, 762014",
         "latitude": 20.8338,
         "longitude": 84.3172,
@@ -1417,6 +1628,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Emergency", "Pediatric Wing", "Free Pathology"],
         "verifiedStock": "Adequate Stock",
     },
+
+    # 25. Subarnapur (Sonepur)
     {
         "id": "fac-bou-2",
         "name": "Boudh Health Care Centre",
@@ -1454,6 +1667,9 @@ HEALTH_FACILITIES = [
         "category": "Govt District Hospital",
         "district": "Subarnapur",
         "ward": "Sonepur Town Ward",
+        "address": "Mahabir Chowk, Sonepur",
+        "latitude": 20.8333,
+        "longitude": 83.9167,
         "address": "Mahabir Chowk, Sonepur, 767017",
         "latitude": 20.8338,
         "longitude": 83.9172,
@@ -1463,6 +1679,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Emergency", "Maternity & Child Health", "Blood Storage"],
         "verifiedStock": "Adequate Stock",
     },
+
+    # 26. Nabarangpur
     {
         "id": "fac-sub-2",
         "name": "Subarnapur Multi-Speciality Clinic",
@@ -1500,6 +1718,9 @@ HEALTH_FACILITIES = [
         "category": "Govt District Hospital",
         "district": "Nabarangpur",
         "ward": "Nabarangpur Town Ward",
+        "address": "Mission Road, Nabarangpur",
+        "latitude": 19.2319,
+        "longitude": 82.5511,
         "address": "Mission Road, Nabarangpur, 764059",
         "latitude": 19.2324,
         "longitude": 82.5516,
@@ -1509,6 +1730,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Emergency", "Nutritional Rehabilitation Unit", "Blood Bank"],
         "verifiedStock": "High",
     },
+
+    # 27. Nuapada
     {
         "id": "fac-nab-2",
         "name": "Nabarangpur Lifeline Clinic & Trauma",
@@ -1546,6 +1769,9 @@ HEALTH_FACILITIES = [
         "category": "Govt District Hospital",
         "district": "Nuapada",
         "ward": "Nuapada Town Ward",
+        "address": "National Highway Road, Nuapada",
+        "latitude": 20.8333,
+        "longitude": 82.5333,
         "address": "National Highway Road, Nuapada, 766105",
         "latitude": 20.8338,
         "longitude": 82.5338,
@@ -1555,6 +1781,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Emergency", "Fever Screening Triage", "Free Medicine Counter"],
         "verifiedStock": "Adequate Stock",
     },
+
+    # 28. Malkangiri
     {
         "id": "fac-nua-2",
         "name": "Khariar Evangelical Hospital",
@@ -1592,6 +1820,9 @@ HEALTH_FACILITIES = [
         "category": "Govt District Hospital",
         "district": "Malkangiri",
         "ward": "Malkangiri Town Ward",
+        "address": "Collectorate Road, Malkangiri",
+        "latitude": 18.3500,
+        "longitude": 81.9000,
         "address": "Collectorate Road, Malkangiri, 764045",
         "latitude": 18.3505,
         "longitude": 81.9005,
@@ -1601,6 +1832,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Emergency", "Japanese Encephalitis & Vector Unit", "Blood Bank", "Pediatric Intensive Care"],
         "verifiedStock": "High (Specialized Vector & Antiviral Drugs in Stock)",
     },
+
+    # 29. Gajapati
     {
         "id": "fac-mal-2",
         "name": "Malkangiri Tribal Health & Trauma Aid",
@@ -1638,6 +1871,9 @@ HEALTH_FACILITIES = [
         "category": "Govt District Hospital",
         "district": "Gajapati",
         "ward": "Paralakhemundi Heritage Ward",
+        "address": "Palace Street, Paralakhemundi, Gajapati",
+        "latitude": 18.8089,
+        "longitude": 84.1539,
         "address": "Palace Street, Paralakhemundi, Gajapati, 761200",
         "latitude": 18.8094,
         "longitude": 84.1544,
@@ -1647,6 +1883,8 @@ HEALTH_FACILITIES = [
         "services": ["24/7 Emergency", "Maternity & Pediatric Hub", "Free Diagnostics"],
         "verifiedStock": "High",
     },
+
+    # 30. Deogarh
     {
         "id": "fac-gaj-2",
         "name": "Gajapati Care Hospital & Trauma Unit",
@@ -1684,6 +1922,9 @@ HEALTH_FACILITIES = [
         "category": "Govt District Hospital",
         "district": "Deogarh",
         "ward": "Deogarh Town Ward",
+        "address": "Hospital Road, Deogarh Town",
+        "latitude": 21.5333,
+        "longitude": 84.7333,
         "address": "Hospital Road, Deogarh Town, 768108",
         "latitude": 21.5338,
         "longitude": 84.7338,
