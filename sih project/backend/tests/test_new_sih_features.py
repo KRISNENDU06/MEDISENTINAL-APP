@@ -31,7 +31,12 @@ def test_area_drill_down_and_time_ranges():
 
 
 def test_live_risk_engine_run():
-    r = client.post("/api/risk/run")
+    login_res = client.post("/api/auth/login", json={"email": "admin@sih.gov.in", "password": "Admin@12345"})
+    assert login_res.status_code == 200
+    token = login_res.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    r = client.post("/api/risk/run", headers=headers)
     assert r.status_code == 200
     data = r.json()
     assert "processed_areas" in data

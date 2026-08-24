@@ -17,6 +17,7 @@ from app.api import (
     dashboard,
     observations,
     privacy,
+    reports,
     response,
     risk,
     simulation,
@@ -88,6 +89,7 @@ app.include_router(privacy.router, prefix="/api")
 app.include_router(response.router, prefix="/api")
 app.include_router(copilot.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")
+app.include_router(reports.router, prefix="/api")
 app.include_router(telemetry.router, prefix="/api")
 
 frontend_dist = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"))

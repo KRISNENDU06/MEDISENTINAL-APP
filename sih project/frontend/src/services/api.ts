@@ -380,7 +380,55 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+
+  // Official Ward Health Reports & Medical Directives
+  getHealthReports: (areaId?: number, riskLevel?: string) => {
+    const params = new URLSearchParams();
+    if (areaId) params.append('area_id', areaId.toString());
+    if (riskLevel) params.append('risk_level', riskLevel);
+    return request<HealthReport[]>(`/api/reports?${params.toString()}`);
+  },
+
+  createHealthReport: (payload: {
+    area_id?: number;
+    area_name?: string;
+    report_title: string;
+    observed_signals: Record<string, any> | string[] | string;
+    risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
+    clinical_notes: string;
+    recommendations: string[] | string;
+    officer_name?: string;
+    officer_designation?: string;
+    is_public?: boolean;
+  }) =>
+    request<HealthReport>('/api/reports', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  deleteHealthReport: (reportId: number) =>
+    request<void>(`/api/reports/${reportId}`, {
+      method: 'DELETE',
+    }),
 };
+
+export interface HealthReport {
+  id: number;
+  area_id: number;
+  area_name: string;
+  district: string;
+  officer_id?: number;
+  officer_name: string;
+  officer_designation: string;
+  report_title: string;
+  observed_signals: string;
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
+  clinical_notes: string;
+  recommendations: string;
+  reported_date: string;
+  is_public: boolean;
+  created_at: string;
+}
 
 export interface Facility {
   id: string;

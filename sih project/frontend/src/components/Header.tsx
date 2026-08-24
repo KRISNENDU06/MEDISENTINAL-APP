@@ -18,6 +18,7 @@ import {
   HeartPulse,
   Building2,
   Users,
+  FileText,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -31,6 +32,7 @@ interface HeaderProps {
   onOpenSymptomChecker?: () => void;
   onOpenFacilities?: () => void;
   onOpenCommunityReport?: () => void;
+  onOpenFileReportModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -44,6 +46,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSymptomChecker,
   onOpenFacilities,
   onOpenCommunityReport,
+  onOpenFileReportModal,
 }) => {
   const { user, logout, quickLogin, isAdmin, isHealthOfficial } = useAuth();
   const { theme, setTheme } = useTheme();
@@ -160,6 +163,18 @@ export const Header: React.FC<HeaderProps> = ({
                   <span className="hidden xl:inline">
                     {isEngineRunning ? 'Computing...' : 'Recalculate Risk'}
                   </span>
+                </button>
+              )}
+
+              {/* File Official Health Report Button (Health Official / Admin) */}
+              {(isAdmin || isHealthOfficial) && onOpenFileReportModal && (
+                <button
+                  onClick={onOpenFileReportModal}
+                  title="Create and publish official ward health report"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-blue-200 bg-blue-950/60 hover:bg-blue-900/60 border border-blue-500/40 shadow-md transition-all hover:text-white active:scale-95"
+                >
+                  <FileText className="w-3.5 h-3.5 text-blue-400" />
+                  <span className="hidden xl:inline">+ Health Report</span>
                 </button>
               )}
 

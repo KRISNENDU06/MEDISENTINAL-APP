@@ -60,6 +60,7 @@ class Area(Base):
 
     observations: Mapped[list["Observation"]] = relationship(back_populates="area")
     assessments: Mapped[list["RiskAssessment"]] = relationship(back_populates="area")
+    health_reports: Mapped[list["HealthReport"]] = relationship(back_populates="area")
 
 
 class AreaNeighbor(Base):
@@ -133,3 +134,23 @@ class ActivityLog(Base):
     details: Mapped[str] = mapped_column(Text, default="")
     ip_address: Mapped[str | None] = mapped_column(String(80), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
+class HealthReport(Base):
+    __tablename__ = "health_reports"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    area_id: Mapped[int] = mapped_column(ForeignKey("areas.id"), index=True)
+    officer_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    officer_name: Mapped[str] = mapped_column(String(255))
+    officer_designation: Mapped[str] = mapped_column(String(255), default="District Health Officer")
+    report_title: Mapped[str] = mapped_column(String(255))
+    observed_signals: Mapped[str] = mapped_column(Text)  # JSON-encoded signals string or descriptions
+    risk_level: Mapped[RiskLevel] = mapped_column(SqlEnum(RiskLevel), default=RiskLevel.MEDIUM, index=True)
+    clinical_notes: Mapped[str] = mapped_column(Text, default="")
+    recommendations: Mapped[str] = mapped_column(Text)  # JSON-encoded or newline-separated directives
+    reported_date: Mapped[date] = mapped_column(Date, default=date.today, index=True)
+    is_public: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    area: Mapped[Area] = relationship(back_populates="health_reports")

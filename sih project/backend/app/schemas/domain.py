@@ -165,3 +165,38 @@ class RiskRunResponse(BaseModel):
     processed_areas: int
     generated_alerts: int
     assessments: list[RiskAssessmentRead]
+
+
+class HealthReportCreate(BaseModel):
+    area_id: int | None = None
+    area_name: str | None = None
+    report_title: str
+    observed_signals: dict | list | str
+    risk_level: RiskLevel = RiskLevel.MEDIUM
+    clinical_notes: str = ""
+    recommendations: list[str] | str
+    officer_name: str | None = None
+    officer_designation: str | None = None
+    reported_date: date | None = None
+    is_public: bool = True
+
+
+class HealthReportRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    area_id: int
+    area_name: str | None = None
+    district: str | None = None
+    officer_id: int | None = None
+    officer_name: str
+    officer_designation: str
+    report_title: str
+    observed_signals: str
+    risk_level: RiskLevel
+    clinical_notes: str
+    recommendations: str
+    reported_date: date
+    is_public: bool
+    created_at: datetime
+

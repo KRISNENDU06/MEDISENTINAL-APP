@@ -17,6 +17,8 @@ import { AIChatbotWidget } from './components/AIChatbotWidget';
 import { SymptomCheckerModal } from './components/SymptomCheckerModal';
 import { FacilitiesLocatorModal } from './components/FacilitiesLocatorModal';
 import { CommunityReportModal } from './components/CommunityReportModal';
+import { HealthReportsSection } from './components/HealthReportsSection';
+import { CreateHealthReportModal } from './components/CreateHealthReportModal';
 import { ToastContainer } from './components/ToastContainer';
 import {
   HeartPulse,
@@ -27,7 +29,7 @@ import {
   Users,
   ShieldCheck,
   Activity,
-  Search,
+  FileText,
 } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -50,6 +52,8 @@ export const App: React.FC = () => {
   const [symptomCheckerOpen, setSymptomCheckerOpen] = useState<boolean>(false);
   const [facilitiesOpen, setFacilitiesOpen] = useState<boolean>(false);
   const [communityReportOpen, setCommunityReportOpen] = useState<boolean>(false);
+  const [fileReportModalOpen, setFileReportModalOpen] = useState<boolean>(false);
+  const [reportsRefreshTrigger, setReportsRefreshTrigger] = useState<number>(0);
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
 
   const [isEngineRunning, setIsEngineRunning] = useState<boolean>(false);
@@ -173,6 +177,7 @@ export const App: React.FC = () => {
         onOpenSymptomChecker={() => setSymptomCheckerOpen(true)}
         onOpenFacilities={() => setFacilitiesOpen(true)}
         onOpenCommunityReport={() => setCommunityReportOpen(true)}
+        onOpenFileReportModal={() => setFileReportModalOpen(true)}
       />
 
       {/* Main Container */}
@@ -302,6 +307,12 @@ export const App: React.FC = () => {
           loading={loading}
         />
 
+        {/* Official Ward Health Reports & Field Directives (New Section) */}
+        <HealthReportsSection
+          onOpenFileReportModal={() => setFileReportModalOpen(true)}
+          refreshTrigger={reportsRefreshTrigger}
+        />
+
         {/* Risk Explanation Diagnostics Panel */}
         <RiskExplanationPanel
           selectedArea={selectedArea || (areas.length > 0 ? areas[0] : null)}
@@ -406,7 +417,18 @@ export const App: React.FC = () => {
         onClose={() => setCommunityReportOpen(false)}
       />
 
-      {/* 7. MEDISENTINEL AI Health Assistant Chatbot */}
+      {/* 7. Create Health Report Modal (HEALTH OFFICIAL / ADMIN) */}
+      <CreateHealthReportModal
+        isOpen={fileReportModalOpen}
+        onClose={() => setFileReportModalOpen(false)}
+        areas={areas}
+        onReportCreated={() => {
+          setReportsRefreshTrigger((prev) => prev + 1);
+          loadDashboardData(false);
+        }}
+      />
+
+      {/* 8. MEDISENTINEL AI Health Assistant Chatbot */}
       <AIChatbotWidget
         selectedArea={selectedArea}
         isOpen={chatbotOpen}
@@ -418,7 +440,7 @@ export const App: React.FC = () => {
         onToggleSimulator={() => setSimulatorActive(!simulatorActive)}
       />
 
-      {/* 8. Floating Toast Notification Container */}
+      {/* 9. Floating Toast Notification Container */}
       <ToastContainer />
     </div>
   );

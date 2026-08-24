@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.security import get_password_hash
-from app.models.domain import Area, AreaNeighbor, Observation, RiskAssessment, Role, User
+from app.models.domain import Area, AreaNeighbor, HealthReport, Observation, RiskAssessment, RiskLevel, Role, User
 from app.services.risk_engine import RiskEngine
 
 
@@ -39,6 +39,8 @@ def seed_database(db: Session) -> None:
         if not db.scalar(select(AreaNeighbor.id).limit(1)):
             _seed_neighbors(db, existing_areas)
             db.commit()
+        _seed_health_reports(db, existing_areas)
+        db.commit()
         if not db.scalar(select(Observation.id).limit(1)):
             return
         if not db.scalar(select(RiskAssessment.id).limit(1)):
@@ -54,6 +56,7 @@ def seed_database(db: Session) -> None:
 
     _seed_neighbors(db, area_objects)
     _seed_observations(db, area_objects)
+    _seed_health_reports(db, area_objects)
     db.commit()
     RiskEngine(db).run_for_all_areas()
 
@@ -128,3 +131,53 @@ def _category_for_signal(signal_type: str) -> str:
     if signal_type == "gi_symptoms":
         return "gastrointestinal"
     return "general"
+
+
+def _seed_health_reports(db: Session, areas: list[Area]) -> None:
+    if db.scalar(select(HealthReport.id).limit(1)):
+        return
+
+    official_user = db.scalar(select(User).where(User.role == Role.HEALTH_OFFICIAL))
+    officer_id = official_user.id if official_user else None
+    officer_name = official_user.full_name if official_user else "Dr. Priya Das (District Health Official)"
+
+    reports = [
+        {
+            "area_name": "Area A (Saheed Nagar)",
+            "title": "Field Surveillance Directive: Vector-Borne Febrile Cluster in Saheed Nagar",
+            "signals": '{"fever_cases_surge": "+58% (7-Day)", "otc_paracetamol_demand": "+64%", "vector_larval_density": "High (Breteau Index 38)", "water_contamination": "Normal (Chlorine 0.4ppm)"}',
+            "risk": RiskLevel.HIGH,
+            "notes": "Door-to-door sentinel survey across 65 households in Sector 4 revealed clustered febrile illness with joint pain. Retail pharmacies report localized stockpiling of antipyretics.",
+            "recommendations": '["Deploy municipal vector fogging in Sectors 3 & 4 immediately", "Set up daily fever screening triage booth at UPHC Saheed Nagar", "Distribute free ORS and paracetamol packets through ASHA workers", "Issue public advisory on eliminating stagnant water containers"]',
+            "days_ago": 1,
+        },
+        {
+            "area_name": "Area B (Patia)",
+            "title": "Clinical Assessment: Waterborne Enteric Anomaly & Sanitation Directive",
+            "signals": '{"gi_symptoms_trend": "+42%", "ors_sales_spike": "+35%", "water_source_turbidity": "Elevated (Pipeline repair in progress)", "clinic_footfalls": "+28%"}',
+            "risk": RiskLevel.MEDIUM,
+            "notes": "Sporadic acute gastroenteritis cases reported near KIIT square corridor. Water tanker supply tested positive for mild coliform presence.",
+            "recommendations": '["Issue immediate boiling water notice for Patia Ward 7", "Mobile chlorine tablet distribution by BMC sanitation teams", "Intensified hydration surveillance at Patia UPHC", "Inspect commercial food vendors in student hostel zone"]',
+            "days_ago": 2,
+        },
+    ]
+
+    for rep in reports:
+        matching_area = next((a for a in areas if rep["area_name"].lower() in a.name.lower()), areas[0] if areas else None)
+        if matching_area:
+            db.add(
+                HealthReport(
+                    area_id=matching_area.id,
+                    officer_id=officer_id,
+                    officer_name=officer_name,
+                    officer_designation="District Health Official",
+                    report_title=rep["title"],
+                    observed_signals=rep["signals"],
+                    risk_level=rep["risk"],
+                    clinical_notes=rep["notes"],
+                    recommendations=rep["recommendations"],
+                    reported_date=date.today() - timedelta(days=rep["days_ago"]),
+                    is_public=True,
+                )
+            )
+
