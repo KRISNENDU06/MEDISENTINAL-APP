@@ -150,8 +150,8 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
                         Medicine Demand
                       </span>
                       <span className="font-bold text-white font-mono">
-                        {selectedArea.signals.medicineDemand.current} (
-                        {selectedArea.signals.medicineDemand.deviation})
+                        {selectedArea.signals?.medicineDemand?.current ?? 0} (
+                        {selectedArea.signals?.medicineDemand?.deviation || '+0%'})
                       </span>
                     </div>
 
@@ -161,8 +161,8 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
                         Fever Symptoms
                       </span>
                       <span className="font-bold text-white font-mono">
-                        {selectedArea.signals.feverIndicators.current} (
-                        {selectedArea.signals.feverIndicators.deviation})
+                        {selectedArea.signals?.feverIndicators?.current ?? 0} (
+                        {selectedArea.signals?.feverIndicators?.deviation || '+0%'})
                       </span>
                     </div>
 
@@ -172,8 +172,8 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
                         Clinic Visits
                       </span>
                       <span className="font-bold text-white font-mono">
-                        {selectedArea.signals.clinicVisits.current} (
-                        {selectedArea.signals.clinicVisits.deviation})
+                        {selectedArea.signals?.clinicVisits?.current ?? 0} (
+                        {selectedArea.signals?.clinicVisits?.deviation || '+0%'})
                       </span>
                     </div>
                   </div>
@@ -247,7 +247,7 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
                       Meds Spike:
                     </span>
                     <span className="font-bold text-white">
-                      {area.signals.medicineDemand.deviation}
+                      {area.signals?.medicineDemand?.deviation || '+0%'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-slate-400">
@@ -256,7 +256,7 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
                       Fever Spike:
                     </span>
                     <span className="font-bold text-white">
-                      {area.signals.feverIndicators.deviation}
+                      {area.signals?.feverIndicators?.deviation || '+0%'}
                     </span>
                   </div>
                 </div>
