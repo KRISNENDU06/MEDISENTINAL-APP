@@ -26,7 +26,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ isOpen, onClos
     }
   };
 
-  const handleQuickDemo = async (role: 'ADMIN' | 'HEALTH_OFFICIAL' | 'ANALYST' | 'VIEWER') => {
+  const handleQuickDemo = async (role: 'ADMIN' | 'HEALTH_OFFICIAL' | 'VIEWER') => {
     setLoading(true);
     const ok = await quickLogin(role);
     setLoading(false);
@@ -65,41 +65,32 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ isOpen, onClos
             <KeyRound className="w-3.5 h-3.5" />
             Quick Profile Switcher (Evaluation / Demo Accounts)
           </span>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => handleQuickDemo('ADMIN')}
               disabled={loading}
-              className="p-2 rounded-xl bg-purple-950/40 hover:bg-purple-900/60 border border-purple-500/30 text-left transition-all group"
+              className="p-2.5 rounded-xl bg-purple-950/40 hover:bg-purple-900/60 border border-purple-500/30 text-left transition-all group"
             >
-              <div className="text-xs font-bold text-purple-300 group-hover:text-purple-200">Admin</div>
-              <div className="text-[10px] text-purple-400/80">Full System Control</div>
+              <div className="text-xs font-bold text-purple-300 group-hover:text-purple-200">👑 Admin</div>
+              <div className="text-[10px] text-purple-400/80">Full Control & Ingestion</div>
             </button>
 
             <button
               onClick={() => handleQuickDemo('HEALTH_OFFICIAL')}
               disabled={loading}
-              className="p-2 rounded-xl bg-blue-950/40 hover:bg-blue-900/60 border border-blue-500/30 text-left transition-all group"
+              className="p-2.5 rounded-xl bg-blue-950/40 hover:bg-blue-900/60 border border-blue-500/30 text-left transition-all group"
             >
-              <div className="text-xs font-bold text-blue-300 group-hover:text-blue-200">Health Official</div>
+              <div className="text-xs font-bold text-blue-300 group-hover:text-blue-200">🏥 Health Official</div>
               <div className="text-[10px] text-blue-400/80">Alerts & RRT Dispatch</div>
-            </button>
-
-            <button
-              onClick={() => handleQuickDemo('ANALYST')}
-              disabled={loading}
-              className="p-2 rounded-xl bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-500/30 text-left transition-all group"
-            >
-              <div className="text-xs font-bold text-emerald-300 group-hover:text-emerald-200">Analyst</div>
-              <div className="text-[10px] text-emerald-400/80">Simulator & Signals</div>
             </button>
 
             <button
               onClick={() => handleQuickDemo('VIEWER')}
               disabled={loading}
-              className="p-2 rounded-xl bg-slate-850 hover:bg-slate-800 border border-slate-700 text-left transition-all group"
+              className="p-2.5 rounded-xl bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-500/30 text-left transition-all group"
             >
-              <div className="text-xs font-bold text-slate-300 group-hover:text-slate-100">Viewer</div>
-              <div className="text-[10px] text-slate-400">Read-Only Monitor</div>
+              <div className="text-xs font-bold text-emerald-300 group-hover:text-emerald-200">👨‍👩‍👧 Citizen / Customer</div>
+              <div className="text-[10px] text-emerald-400/80">Symptom Checker & Clinics</div>
             </button>
           </div>
         </div>

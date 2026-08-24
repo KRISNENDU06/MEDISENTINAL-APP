@@ -7,19 +7,21 @@ interface AuthContextType {
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  quickLogin: (role: 'ADMIN' | 'HEALTH_OFFICIAL' | 'ANALYST' | 'VIEWER') => Promise<boolean>;
+  quickLogin: (role: 'ADMIN' | 'HEALTH_OFFICIAL' | 'VIEWER') => Promise<boolean>;
   logout: () => void;
   isAdmin: boolean;
+  isHealthOfficial: boolean;
+  isViewer: boolean;
   canManageAlerts: boolean;
   canAddObservations: boolean;
+  canViewAnomalyMatrix: boolean;
   canRunRiskEngine: boolean;
 }
 
-const DEMO_CREDENTIALS = {
-  ADMIN: { email: 'admin@sih.gov.in', password: 'Admin@12345', label: 'Admin (Full Access)' },
+export const DEMO_CREDENTIALS = {
+  ADMIN: { email: 'admin@sih.gov.in', password: 'Admin@12345', label: 'Admin (Full Control)' },
   HEALTH_OFFICIAL: { email: 'official@sih.gov.in', password: 'Official@12345', label: 'Health Official (Alerts & RRT)' },
-  ANALYST: { email: 'analyst@sih.gov.in', password: 'Analyst@12345', label: 'Epidemic Analyst (Simulation & Obs)' },
-  VIEWER: { email: 'viewer@sih.gov.in', password: 'Viewer@12345', label: 'Public Health Monitor (Read Only)' },
+  VIEWER: { email: 'viewer@sih.gov.in', password: 'Viewer@12345', label: 'Citizen / Customer (Public View)' },
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -76,14 +78,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.removeItem('sih_auth_token');
     setToken(null);
     setUser(null);
-    showToast('info', 'Logged Out', 'You have been switched to Guest Mode.');
+    showToast('info', 'Logged Out', 'You have been switched to Citizen / Guest Mode.');
   };
 
   const role = user?.role;
   const isAdmin = role === 'ADMIN';
+  const isHealthOfficial = role === 'HEALTH_OFFICIAL';
+  const isViewer = role === 'VIEWER' || !role;
   const canManageAlerts = role === 'ADMIN' || role === 'HEALTH_OFFICIAL';
-  const canAddObservations = role === 'ADMIN' || role === 'HEALTH_OFFICIAL' || role === 'ANALYST';
-  const canRunRiskEngine = true; // Allowed in demo mode for evaluation
+  const canAddObservations = role === 'ADMIN';
+  const canViewAnomalyMatrix = role === 'ADMIN' || role === 'HEALTH_OFFICIAL';
+  const canRunRiskEngine = role === 'ADMIN' || role === 'HEALTH_OFFICIAL';
 
   return (
     <AuthContext.Provider
@@ -95,8 +100,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         quickLogin,
         logout,
         isAdmin,
+        isHealthOfficial,
+        isViewer,
         canManageAlerts,
         canAddObservations,
+        canViewAnomalyMatrix,
         canRunRiskEngine,
       }}
     >

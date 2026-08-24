@@ -68,7 +68,7 @@ export interface User {
   id: number;
   email: string;
   full_name: string;
-  role: 'ADMIN' | 'HEALTH_OFFICIAL' | 'ANALYST' | 'VIEWER';
+  role: 'ADMIN' | 'HEALTH_OFFICIAL' | 'VIEWER';
   is_active: boolean;
 }
 
@@ -343,4 +343,58 @@ export const api = {
         selected_area_id: selectedAreaId,
       }),
     }),
+
+  // Citizen Healthcare & 24/7 Pharmacies Locator
+  getFacilities: (district?: string, type?: string) => {
+    const params = new URLSearchParams();
+    if (district) params.append('district', district);
+    if (type) params.append('facility_type', type);
+    return request<Facility[]>(`/api/areas/facilities?${params.toString()}`);
+  },
+
+  // Anonymous Community Watch Symptom Reporting
+  submitCommunityReport: (payload: { wardName: string; symptom: string; casesCount: number }) =>
+    request<{
+      success: boolean;
+      message: string;
+      anonymizedReportId: string;
+      privacyGuarantee: string;
+    }>('/api/observations/community-report', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  // Multilingual Public Health Advisory Generator
+  generateAdvisory: (payload: { wardName?: string; riskLevel?: string; diseaseType?: string }) =>
+    request<{
+      generatedAt: string;
+      wardName: string;
+      riskLevel: string;
+      diseaseType: string;
+      languages: {
+        english: { title: string; body: string; precautions: string[] };
+        odia: { title: string; body: string; precautions: string[] };
+        hindi: { title: string; body: string; precautions: string[] };
+      };
+    }>('/api/response/generate-advisory', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 };
+
+export interface Facility {
+  id: string;
+  name: string;
+  type: 'UPHC' | 'HOSPITAL' | 'PHARMACY';
+  category: string;
+  district: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  phone: string;
+  helpline?: string;
+  isOpen24x7: boolean;
+  operatingHours?: string;
+  services: string[];
+  verifiedStock: string;
+}

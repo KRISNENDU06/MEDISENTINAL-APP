@@ -21,7 +21,7 @@ router = APIRouter(prefix="/risk", tags=["risk"])
 )
 def run_risk_engine(
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL, Role.ANALYST, Role.VIEWER))],
+    current_user: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL))],
     assessed_on: date | None = None,
 ) -> RiskRunResponse:
     assessments, generated_alerts = RiskEngine(db).run_for_all_areas(assessed_on)
@@ -42,7 +42,7 @@ def run_risk_engine(
 @router.get("/assessments", response_model=list[RiskAssessmentRead])
 def list_assessments(
     db: Annotated[Session, Depends(get_db)],
-    _: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL, Role.ANALYST, Role.VIEWER))],
+    _: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL, Role.VIEWER))],
     area_id: int | None = None,
     limit: int = 100,
 ) -> list[RiskAssessment]:
@@ -55,7 +55,7 @@ def list_assessments(
 @router.get("/comparison", response_model=list[ComparisonRow])
 def comparison(
     db: Annotated[Session, Depends(get_db)],
-    _: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL, Role.ANALYST, Role.VIEWER))],
+    _: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL))],
     assessed_on: date | None = None,
     area_id: int | None = None,
 ) -> list[dict]:

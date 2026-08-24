@@ -15,7 +15,7 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 @router.get("/summary", response_model=DashboardSummary)
 def dashboard_summary(
     db: Annotated[Session, Depends(get_db)],
-    _: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL, Role.ANALYST, Role.VIEWER))],
+    _: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL, Role.VIEWER))],
 ) -> DashboardSummary:
     latest_by_area = _latest_assessments(db)
     scores = [assessment.risk_score for assessment in latest_by_area]
@@ -42,7 +42,7 @@ def dashboard_summary(
 @router.get("/area-risk", response_model=list[AreaRiskSummary])
 def area_risk(
     db: Annotated[Session, Depends(get_db)],
-    _: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL, Role.ANALYST, Role.VIEWER))],
+    _: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL, Role.VIEWER))],
 ) -> list[AreaRiskSummary]:
     areas = db.scalars(select(Area).order_by(Area.name)).all()
     rows = []

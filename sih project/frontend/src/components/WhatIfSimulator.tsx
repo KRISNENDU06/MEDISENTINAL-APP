@@ -99,14 +99,19 @@ export const WhatIfSimulator: React.FC = () => {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div>
-          <h3 className="text-lg font-bold text-white flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400">
-              <Sliders className="w-5 h-5" />
-            </div>
-            SEIR Epidemic Scenario & Intervention Model
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-bold text-white flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400">
+                <Sliders className="w-5 h-5" />
+              </div>
+              Outbreak Science & What-If Action Lab
+            </h3>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30 font-bold uppercase tracking-wider">
+              Educational Simulation
+            </span>
+          </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            Parametric multi-signal surge testing, transmission reduction factor, and reproduction rate dynamics
+            Test how community hygiene, vector fogging, and clean water flatten the transmission curve in real-time
           </p>
         </div>
 

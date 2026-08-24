@@ -10,7 +10,6 @@ from app.db.session import Base
 class Role(str, Enum):
     ADMIN = "ADMIN"
     HEALTH_OFFICIAL = "HEALTH_OFFICIAL"
-    ANALYST = "ANALYST"
     VIEWER = "VIEWER"
 
 

@@ -15,9 +15,128 @@ router = APIRouter(prefix="/areas", tags=["areas"])
 @router.get("", response_model=list[AreaRead])
 def list_areas(
     db: Annotated[Session, Depends(get_db)],
-    _: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL, Role.ANALYST, Role.VIEWER))],
+    _: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL, Role.VIEWER))],
 ) -> list[Area]:
     return list(db.scalars(select(Area).order_by(Area.name)).all())
+
+
+HEALTH_FACILITIES = [
+    {
+        "id": "fac-1",
+        "name": "Urban Primary Health Centre (UPHC) Saheed Nagar",
+        "type": "UPHC",
+        "category": "Government Clinic",
+        "district": "Bhubaneswar",
+        "address": "Plot 42, Near BMC Community Hall, Saheed Nagar",
+        "latitude": 20.2925,
+        "longitude": 85.8475,
+        "phone": "+91-674-2541929",
+        "helpline": "1929",
+        "isOpen24x7": True,
+        "services": ["Free Fever Triage", "Rapid Dengue & Malaria Testing", "Free ORS & Antibiotics", "Doctor Consultation"],
+        "verifiedStock": "High (Paracetamol, ORS, IV Fluids available)",
+    },
+    {
+        "id": "fac-2",
+        "name": "Capital Hospital & Epidemic Ward",
+        "type": "HOSPITAL",
+        "category": "Govt District Hospital",
+        "district": "Bhubaneswar",
+        "address": "Unit 6, Near AG Square, Bhubaneswar",
+        "latitude": 20.2644,
+        "longitude": 85.8281,
+        "phone": "+91-674-2391983",
+        "helpline": "108",
+        "isOpen24x7": True,
+        "services": ["24/7 Emergency & ICU", "Platelet Blood Bank", "Isolation Ward", "RT-PCR / Viral Testing"],
+        "verifiedStock": "Critical Care Ready (Oxygen & Isolation Beds active)",
+    },
+    {
+        "id": "fac-3",
+        "name": "UPHC Patia Sector 3 & Fever Clinic",
+        "type": "UPHC",
+        "category": "Government Clinic",
+        "district": "Bhubaneswar",
+        "address": "Sector 3, Near Infocity Square, Patia",
+        "latitude": 20.3588,
+        "longitude": 85.8166,
+        "phone": "+91-674-2748890",
+        "helpline": "104",
+        "isOpen24x7": False,
+        "operatingHours": "8:00 AM - 8:00 PM",
+        "services": ["Outpatient Syndromic Screen", "Blood Sample Collection", "Vaccination", "Telemedicine"],
+        "verifiedStock": "Adequate (Diagnostic kits available)",
+    },
+    {
+        "id": "fac-4",
+        "name": "Apollo 24/7 Pharmacy & First Aid Point",
+        "type": "PHARMACY",
+        "category": "24/7 Retail Pharmacy",
+        "district": "Bhubaneswar",
+        "address": "Shop 12, Master Canteen Square",
+        "latitude": 20.2685,
+        "longitude": 85.8402,
+        "phone": "+91-674-2530112",
+        "isOpen24x7": True,
+        "services": ["24/7 OTC Antipyretics", "ORS & Electrolytes", "Mosquito Repellents", "Home Delivery"],
+        "verifiedStock": "Verified Stock (Essential Medicines In Stock)",
+    },
+    {
+        "id": "fac-5",
+        "name": "MedPlus 24x7 Pharmacy & Diagnostic Point",
+        "type": "PHARMACY",
+        "category": "24/7 Retail Pharmacy",
+        "district": "Bhubaneswar",
+        "address": "KIIT Road, Near Patia Station",
+        "latitude": 20.3540,
+        "longitude": 85.8190,
+        "phone": "+91-674-2725511",
+        "isOpen24x7": True,
+        "services": ["24/7 Emergency Medicines", "Thermometers & Oximeters", "Water Purification Tablets"],
+        "verifiedStock": "Verified Stock (Ample Supply)",
+    },
+    {
+        "id": "fac-6",
+        "name": "SCB Medical College & Hospital",
+        "type": "HOSPITAL",
+        "category": "Govt Medical College",
+        "district": "Cuttack",
+        "address": "Mangalabag, Cuttack",
+        "latitude": 20.4625,
+        "longitude": 85.8830,
+        "phone": "+91-671-2414004",
+        "helpline": "108",
+        "isOpen24x7": True,
+        "services": ["Tertiary Referral Hub", "State Viral Research Lab", "Advanced Critical Care"],
+        "verifiedStock": "State Central Repository (Fully Equipped)",
+    },
+    {
+        "id": "fac-7",
+        "name": "District Headquarters Hospital (DHH) Puri",
+        "type": "HOSPITAL",
+        "category": "Govt District Hospital",
+        "district": "Puri",
+        "address": "Grand Road, Puri",
+        "latitude": 19.8135,
+        "longitude": 85.8312,
+        "phone": "+91-6752-222045",
+        "helpline": "108",
+        "isOpen24x7": True,
+        "services": ["24/7 Emergency", "Epidemic Control Unit", "Diarrheal Treatment Center"],
+        "verifiedStock": "Adequate",
+    },
+]
+
+
+@router.get("/facilities")
+def list_facilities(district: str | None = None, facility_type: str | None = None) -> list[dict]:
+    """Public locator endpoint for citizens to find nearby healthcare centers & 24/7 pharmacies."""
+    res = HEALTH_FACILITIES
+    if district:
+        res = [f for f in res if f["district"].lower() == district.lower()]
+    if facility_type:
+        res = [f for f in res if f["type"].upper() == facility_type.upper()]
+    return res
 
 
 @router.get("/risk-summary")

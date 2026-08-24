@@ -19,10 +19,9 @@ AREAS = [
 ]
 
 DEMO_USERS = [
-    ("admin@sih.gov.in", "Dr. Amit Sharma (Admin)", "Admin@12345", Role.ADMIN),
-    ("official@sih.gov.in", "Dr. Priya Das (Health Official)", "Official@12345", Role.HEALTH_OFFICIAL),
-    ("analyst@sih.gov.in", "Rajesh Mohanty (Epidemiology Analyst)", "Analyst@12345", Role.ANALYST),
-    ("viewer@sih.gov.in", "Field Monitor (Viewer)", "Viewer@12345", Role.VIEWER),
+    ("admin@sih.gov.in", "Dr. Amit Sharma (Admin Lead)", "Admin@12345", Role.ADMIN),
+    ("official@sih.gov.in", "Dr. Priya Das (District Health Official)", "Official@12345", Role.HEALTH_OFFICIAL),
+    ("viewer@sih.gov.in", "Citizen & Community User (Viewer)", "Viewer@12345", Role.VIEWER),
 ]
 
 

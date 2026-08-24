@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useTheme, ThemeMode } from '../context/ThemeContext';
+import { useTheme } from '../context/ThemeContext';
 import {
   Activity,
   RefreshCw,
@@ -15,6 +15,9 @@ import {
   Sparkles,
   Palette,
   ArrowLeft,
+  HeartPulse,
+  Building2,
+  Users,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -25,6 +28,9 @@ interface HeaderProps {
   onToggleSimulator: () => void;
   isSimulatorActive: boolean;
   onOpenChatbot: () => void;
+  onOpenSymptomChecker?: () => void;
+  onOpenFacilities?: () => void;
+  onOpenCommunityReport?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -35,9 +41,12 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleSimulator,
   isSimulatorActive,
   onOpenChatbot,
+  onOpenSymptomChecker,
+  onOpenFacilities,
+  onOpenCommunityReport,
 }) => {
-  const { user, logout, quickLogin } = useAuth();
-  const { theme, setTheme, toggleTheme } = useTheme();
+  const { user, logout, quickLogin, isAdmin, isHealthOfficial } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
 
@@ -47,10 +56,9 @@ export const Header: React.FC<HeaderProps> = ({
         return 'bg-purple-500/20 text-purple-300 border-purple-500/40';
       case 'HEALTH_OFFICIAL':
         return 'bg-blue-500/20 text-blue-300 border-blue-500/40';
-      case 'ANALYST':
-        return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+      case 'VIEWER':
       default:
-        return 'bg-slate-700/40 text-slate-300 border-slate-600/40';
+        return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
     }
   };
 
@@ -67,8 +75,8 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+    <header className="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-slate-950/85 backdrop-blur-xl transition-colors">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
         {/* Brand & Logo (MEDISENTINEL - YOUR HEALTH, OUR WATCH) */}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 p-0.5 shadow-lg shadow-emerald-950/50 flex items-center justify-center">
@@ -91,8 +99,8 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Action Controls, Theme Switcher & Auth */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        {/* Action Controls, Citizen Tools & Auth */}
+        <div className="flex items-center gap-1.5 sm:gap-2.5">
           {/* Return / Back option when in Simulator mode */}
           {isSimulatorActive ? (
             <button
@@ -104,28 +112,66 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           ) : (
             <>
-              {/* Live Risk Refresh Button */}
-              <button
-                onClick={onRunRiskEngine}
-                disabled={isEngineRunning}
-                title="Run Risk Engine to recompute anomaly scores and alerts"
-                className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-brand-600 to-emerald-600 hover:from-brand-500 hover:to-emerald-500 border border-brand-400/30 shadow-lg shadow-emerald-950/50 transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isEngineRunning ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">
-                  {isEngineRunning ? 'Computing...' : 'Run Risk Engine'}
-                </span>
-              </button>
+              {/* Citizen Tool 1: Symptom Checker */}
+              {onOpenSymptomChecker && (
+                <button
+                  onClick={onOpenSymptomChecker}
+                  title="3-Step Smart Symptom Triage for you and your family"
+                  className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-semibold text-rose-200 bg-rose-950/50 hover:bg-rose-900/60 border border-rose-500/40 shadow-md transition-all active:scale-95"
+                >
+                  <HeartPulse className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
+                  <span className="hidden md:inline">Symptom Checker</span>
+                </button>
+              )}
 
-              {/* Add Observation Button (ADMIN ONLY - Hidden from Viewers/Guests) */}
-              {user?.role === 'ADMIN' && (
+              {/* Citizen Tool 2: Facilities / 24/7 Pharmacy Locator */}
+              {onOpenFacilities && (
+                <button
+                  onClick={onOpenFacilities}
+                  title="Find nearby UPHC clinics, hospitals & open 24/7 pharmacies"
+                  className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-semibold text-emerald-200 bg-emerald-950/50 hover:bg-emerald-900/60 border border-emerald-500/40 shadow-md transition-all active:scale-95"
+                >
+                  <Building2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="hidden md:inline">Find Care & Medicine</span>
+                </button>
+              )}
+
+              {/* Citizen Tool 3: Community Watch */}
+              {onOpenCommunityReport && (
+                <button
+                  onClick={onOpenCommunityReport}
+                  title="Anonymously report family fever / syndromic signals"
+                  className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-semibold text-purple-200 bg-purple-950/50 hover:bg-purple-900/60 border border-purple-500/40 shadow-md transition-all active:scale-95"
+                >
+                  <Users className="w-3.5 h-3.5 text-purple-400" />
+                  <span className="hidden lg:inline">Community Watch</span>
+                </button>
+              )}
+
+              {/* Live Risk Refresh Button (Admin / Health Official) */}
+              {(isAdmin || isHealthOfficial) && (
+                <button
+                  onClick={onRunRiskEngine}
+                  disabled={isEngineRunning}
+                  title="Run Risk Engine to recompute anomaly scores and alerts"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-brand-600 to-emerald-600 hover:from-brand-500 hover:to-emerald-500 border border-brand-400/30 shadow-lg shadow-emerald-950/50 transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isEngineRunning ? 'animate-spin' : ''}`} />
+                  <span className="hidden xl:inline">
+                    {isEngineRunning ? 'Computing...' : 'Recalculate Risk'}
+                  </span>
+                </button>
+              )}
+
+              {/* Add Observation Button (ADMIN ONLY) */}
+              {isAdmin && (
                 <button
                   onClick={onOpenObservationModal}
                   title="Privileged Data Input (Admin Access Only)"
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-purple-200 bg-purple-950/60 hover:bg-purple-900/60 border border-purple-500/40 shadow-md transition-all hover:text-white active:scale-95 animate-in fade-in"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-purple-200 bg-purple-950/60 hover:bg-purple-900/60 border border-purple-500/40 shadow-md transition-all hover:text-white active:scale-95"
                 >
                   <PlusCircle className="w-3.5 h-3.5 text-purple-400" />
-                  <span className="hidden md:inline">+ Input Signal (Admin)</span>
+                  <span className="hidden xl:inline">+ Ingest Signal</span>
                 </button>
               )}
 
@@ -138,13 +184,13 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="hidden lg:inline">AI Health Assistant</span>
               </button>
 
-              {/* What-If Simulator Toggle */}
+              {/* What-If Simulator Toggle (Interactive Lab) */}
               <button
                 onClick={onToggleSimulator}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium border bg-slate-850 hover:bg-slate-800 text-slate-300 border-slate-700/80 transition-all"
               >
                 <Sliders className="w-3.5 h-3.5 text-amber-400" />
-                <span className="hidden lg:inline">What-If Simulator</span>
+                <span className="hidden xl:inline">Outbreak Lab</span>
               </button>
             </>
           )}
@@ -157,9 +203,6 @@ export const Header: React.FC<HeaderProps> = ({
               className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl bg-slate-850 hover:bg-slate-800 text-slate-200 border border-slate-700 transition-all active:scale-95"
             >
               {getThemeIcon()}
-              <span className="text-[11px] font-semibold uppercase hidden xl:inline">
-                {theme}
-              </span>
             </button>
 
             {themeMenuOpen && (
@@ -229,16 +272,16 @@ export const Header: React.FC<HeaderProps> = ({
           {/* User Auth / Quick Role Switcher */}
           <div className="relative">
             {user ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 <button
                   onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${getRoleBadge(
+                  className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${getRoleBadge(
                     user.role
                   )}`}
                 >
                   <Shield className="w-3.5 h-3.5" />
-                  <span className="max-w-[100px] truncate hidden sm:inline">{user.full_name}</span>
-                  <span className="text-[10px] opacity-80">({user.role})</span>
+                  <span className="max-w-[90px] truncate hidden sm:inline">{user.full_name}</span>
+                  <span className="text-[10px] opacity-80">({user.role === 'VIEWER' ? 'CITIZEN' : user.role})</span>
                 </button>
                 <button
                   onClick={logout}
@@ -249,13 +292,13 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 <button
                   onClick={onOpenLoginModal}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-medium text-slate-200 bg-slate-850 hover:bg-slate-800 border border-slate-700 hover:text-white transition-all"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-200 bg-slate-850 hover:bg-slate-800 border border-slate-700 hover:text-white transition-all"
                 >
                   <UserIcon className="w-3.5 h-3.5 text-brand-400" />
-                  <span>Admin Login</span>
+                  <span>Login</span>
                 </button>
                 <button
                   onClick={() => setRoleMenuOpen(!roleMenuOpen)}
@@ -271,7 +314,7 @@ export const Header: React.FC<HeaderProps> = ({
             {roleMenuOpen && (
               <div className="absolute right-0 mt-2 w-64 rounded-2xl glass-panel shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 border border-slate-700">
                 <div className="px-3 py-2 border-b border-slate-800 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                  Select User Role Profile
+                  Select User Persona
                 </div>
                 <div className="mt-1 space-y-1">
                   <button
@@ -281,8 +324,8 @@ export const Header: React.FC<HeaderProps> = ({
                     }}
                     className="w-full text-left px-3 py-2 rounded-xl text-xs text-purple-300 hover:bg-purple-950/40 flex items-center justify-between transition-colors"
                   >
-                    <span>Dr. Amit Sharma</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20">ADMIN</span>
+                    <span>👑 Dr. Amit Sharma</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 font-bold">ADMIN</span>
                   </button>
                   <button
                     onClick={() => {
@@ -291,28 +334,18 @@ export const Header: React.FC<HeaderProps> = ({
                     }}
                     className="w-full text-left px-3 py-2 rounded-xl text-xs text-blue-300 hover:bg-blue-950/40 flex items-center justify-between transition-colors"
                   >
-                    <span>Dr. Priya Das</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20">OFFICIAL</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      quickLogin('ANALYST');
-                      setRoleMenuOpen(false);
-                    }}
-                    className="w-full text-left px-3 py-2 rounded-xl text-xs text-emerald-300 hover:bg-emerald-950/40 flex items-center justify-between transition-colors"
-                  >
-                    <span>Rajesh Mohanty</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20">ANALYST</span>
+                    <span>🏥 Dr. Priya Das</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 font-bold">OFFICIAL</span>
                   </button>
                   <button
                     onClick={() => {
                       quickLogin('VIEWER');
                       setRoleMenuOpen(false);
                     }}
-                    className="w-full text-left px-3 py-2 rounded-xl text-xs text-slate-300 hover:bg-slate-800/40 flex items-center justify-between transition-colors"
+                    className="w-full text-left px-3 py-2 rounded-xl text-xs text-emerald-300 hover:bg-emerald-950/40 flex items-center justify-between transition-colors"
                   >
-                    <span>Field Monitor</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-700/40">VIEWER</span>
+                    <span>👨‍👩‍👧 Citizen / Customer</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 font-bold">PUBLIC</span>
                   </button>
                 </div>
               </div>
