@@ -38,12 +38,23 @@ class RiskEngine:
         persistence = self.persistence_score(area.id, assessed_on)
         geographic = self.geographic_spread_score(area.id, assessed_on)
 
-        risk_score = (
+        weighted_score = (
             medicine.anomaly_score * self.settings.medicine_weight
             + health.anomaly_score * self.settings.health_weight
             + persistence * self.settings.persistence_weight
             + geographic * self.settings.geographic_weight
         )
+
+        # Acute Outbreak Surge Logic:
+        # If any primary health signal (e.g. fever or medicine demand) exhibits an acute spike (>= 50 anomaly),
+        # ensure single-signal surges are prioritized so early warning alerts trigger promptly.
+        max_signal = max(medicine.anomaly_score, health.anomaly_score)
+        if max_signal >= 50:
+            acute_override = max_signal * 0.90 + min(medicine.anomaly_score, health.anomaly_score) * 0.10
+            risk_score = max(weighted_score, acute_override)
+        else:
+            risk_score = weighted_score
+
         risk_score = round(max(0, min(100, risk_score)), 2)
         risk_level = self.classify_risk(risk_score)
         confidence = self.confidence_score(medicine, health, persistence, geographic)
@@ -75,13 +86,25 @@ class RiskEngine:
         baseline_end = current_on - timedelta(days=7)
 
         current_value = self._sum_observations(area_id, signal_types, current_start, current_on)
+        latest_daily = self._sum_observations(area_id, signal_types, current_on, current_on)
         baseline_weekly = self._weekly_baseline(area_id, signal_types, baseline_start, baseline_end)
-        deviation = ((current_value - baseline_weekly) / baseline_weekly * 100) if baseline_weekly > 0 else 0
+
+        # If area has no 90-day baseline history (e.g. newly ingested area or signal), use standard benchmark
+        if baseline_weekly <= 0 and current_value > 0:
+            baseline_weekly = 70.0 if any("fever" in s or "symptom" in s for s in signal_types) else 100.0
+
+        weekly_dev = ((current_value - baseline_weekly) / baseline_weekly * 100) if baseline_weekly > 0 else 0
+        baseline_daily = (baseline_weekly / 7.0) if baseline_weekly > 0 else 10.0
+        daily_dev = ((latest_daily - baseline_daily) / baseline_daily * 100) if latest_daily > 0 and baseline_daily > 0 else 0
+
+        deviation = max(weekly_dev, daily_dev) if daily_dev > weekly_dev else weekly_dev
+        anomaly = self.normalize_deviation(deviation)
+
         return BaselineComparison(
             current_value=round(current_value, 2),
             baseline_value=round(baseline_weekly, 2),
             deviation_percent=round(deviation, 2),
-            anomaly_score=self.normalize_deviation(deviation),
+            anomaly_score=anomaly,
         )
 
     def persistence_score(self, area_id: int, assessed_on: date) -> float:
