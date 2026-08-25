@@ -1905,27 +1905,14 @@ def list_facilities(district: str | None = None, facility_type: str | None = Non
     return res
 
 
-_RISK_SUMMARY_CACHE: dict[int, list[dict]] = {}
-
-
-def invalidate_areas_cache():
-    _RISK_SUMMARY_CACHE.clear()
-
-
 @router.get("/risk-summary")
 def frontend_risk_summary(
     db: Annotated[Session, Depends(get_db)],
     days: int = 30,
 ) -> list[dict]:
     """Return area summaries in the shape expected by the frontend dashboard."""
-    if days in _RISK_SUMMARY_CACHE:
-        return _RISK_SUMMARY_CACHE[days]
-
     areas = db.scalars(select(Area).order_by(Area.name)).all()
     return [_frontend_area_summary(db, area, days=days) for area in areas]
-    result = [_frontend_area_summary(db, area, days=days) for area in areas]
-    _RISK_SUMMARY_CACHE[days] = result
-    return result
 
 
 @router.get("/{area_id}")

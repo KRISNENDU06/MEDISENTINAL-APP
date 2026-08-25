@@ -272,15 +272,6 @@ export const HealthReportsSection: React.FC<HealthReportsSectionProps> = ({
               </span>
             )}
           </button>
-          {canCreateReport && (
-            <button
-              onClick={onOpenFileReportModal}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 border border-blue-400/30 shadow-lg shadow-blue-950/50 transition-all active:scale-95"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>File Official Health Report</span>
-            </button>
-          )}
         </div>
       </div>
 
