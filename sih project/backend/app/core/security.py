@@ -52,7 +52,8 @@ def get_refresh_token_record(db: Session, token: str) -> RefreshToken | None:
 
 
 def authenticate_user(db: Session, email: str, password: str) -> User | None:
-    user = db.scalar(select(User).where(User.email == email))
+    clean_id = email.strip().lower()
+    user = db.scalar(select(User).where(User.email.ilike(clean_id)))
     if not user or not user.is_active:
         return None
     if not verify_password(password, user.hashed_password):

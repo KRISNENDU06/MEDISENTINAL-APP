@@ -6,9 +6,11 @@ from sqlalchemy.orm import Session
 from app.api.deps import require_roles
 from app.db.session import get_db
 from app.models.domain import Area, Observation, Role, User
-from app.schemas.domain import ObservationCreate, ObservationRead
+from app.schemas.domain import ObservationCreate, ObservationRead, MultiSignalObservationCreate
 from app.services.audit import log_activity
 from app.services.risk_engine import RiskEngine
+from app.api.areas import invalidate_areas_cache
+from app.api.dashboard import invalidate_dashboard_cache
 
 router = APIRouter(prefix="/observations", tags=["observations"])
 
@@ -380,6 +382,137 @@ def create_observation(
     }
 
 
+@router.post(
+    "/multi",
+    status_code=status.HTTP_201_CREATED,
+)
+def create_multi_signal_observation(
+    payload: MultiSignalObservationCreate,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(require_roles(Role.ADMIN))],
+    auto_run_risk: bool = True,
+) -> dict:
+    """Ingest multi-parameter syndromic package (Pharmacy OTC Medicine Demand + Hospital OPD Fever Consultations + Lab Data)."""
+    name_input = (payload.area_name or "").strip()
+    district_input = (payload.district or "").strip()
+
+    target_area = None
+    if name_input:
+        target_area = db.scalar(select(Area).where(Area.name.ilike(f"%{name_input}%")))
+    if not target_area and payload.area_id and payload.area_id > 0:
+        target_area = db.get(Area, payload.area_id)
+
+    if not target_area:
+        search_str = f"{name_input} {district_input}".lower()
+        matched_coords = None
+        for key, coords in sorted(KNOWN_COORDINATES.items(), key=lambda x: len(x[0]), reverse=True):
+            if key in search_str:
+                matched_coords = coords
+                break
+
+        lat = payload.latitude if payload.latitude is not None else (matched_coords[0] if matched_coords else 20.8444)
+        lng = payload.longitude if payload.longitude is not None else (matched_coords[1] if matched_coords else 85.1511)
+        final_district = district_input or name_input or "Odisha Region"
+        final_name = name_input or f"Ward - {final_district}"
+
+        target_area = Area(
+            name=final_name,
+            district=final_district,
+            state="Odisha",
+            latitude=lat,
+            longitude=lng,
+        )
+        db.add(target_area)
+        db.flush()
+    else:
+        if payload.latitude is not None and payload.longitude is not None:
+            target_area.latitude = payload.latitude
+            target_area.longitude = payload.longitude
+        if district_input and not target_area.district:
+            target_area.district = district_input
+
+    # 1. Ingest Medicine Demand
+    if payload.medicine_demand > 0:
+        db.add(
+            Observation(
+                area_id=target_area.id,
+                observed_on=payload.observed_on,
+                signal_type="medicine_demand",
+                category="fever_respiratory_medicines",
+                value=payload.medicine_demand,
+                source=payload.pharmacy_source or "Retail Chemist Network",
+                data_quality_score=payload.data_quality_score,
+            )
+        )
+
+    # 2. Ingest Fever Cases
+    if payload.fever_cases > 0:
+        db.add(
+            Observation(
+                area_id=target_area.id,
+                observed_on=payload.observed_on,
+                signal_type="fever_cases",
+                category="respiratory_fever",
+                value=payload.fever_cases,
+                source=payload.hospital_source or "Hospital & PHC OPD Register",
+                data_quality_score=payload.data_quality_score,
+            )
+        )
+
+    # 3. Ingest Water Quality
+    if payload.water_quality is not None and payload.water_quality > 0:
+        db.add(
+            Observation(
+                area_id=target_area.id,
+                observed_on=payload.observed_on,
+                signal_type="water_quality",
+                category="environmental_water",
+                value=payload.water_quality,
+                source=payload.water_source or "Water Quality Surveillance Lab",
+                data_quality_score=payload.data_quality_score,
+            )
+        )
+
+    db.flush()
+
+    log_activity(
+        db,
+        action="MULTI_OBSERVATION_CREATED",
+        details=f"Admin ingested multi-signal package (Medicine: {payload.medicine_demand}, Fever: {payload.fever_cases}) for {target_area.name} ({target_area.district})",
+        user=current_user,
+    )
+
+    generated_alerts = 0
+    assessment = None
+    if auto_run_risk:
+        engine = RiskEngine(db)
+        assessments, generated_alerts = engine.run_for_all_areas(payload.observed_on)
+        assessment = next((a for a in assessments if a.area_id == target_area.id), None)
+        log_activity(
+            db,
+            action="RISK_ENGINE_AUTO_RUN",
+            details=f"Auto-ran risk engine after multi-observation: {len(assessments)} areas assessed, {generated_alerts} alerts generated",
+            user=current_user,
+        )
+
+    db.commit()
+
+    return {
+        "success": True,
+        "message": f"Successfully Ingested: Multi-parameter health signals for {target_area.name} ({target_area.district}) recorded & Risk Engine updated.",
+        "area_name": target_area.name,
+        "district": target_area.district,
+        "assessment": {
+            "risk_score": assessment.risk_score if assessment else None,
+            "risk_level": assessment.risk_level.value if assessment else None,
+            "medicine_score": assessment.medicine_score if assessment else None,
+            "health_score": assessment.health_score if assessment else None,
+            "confidence": assessment.confidence if assessment else None,
+        } if assessment else None,
+        "generated_alerts": generated_alerts,
+    }
+
+
 @router.post("/community-report")
 def submit_community_report(
     payload: dict,
@@ -449,3 +582,47 @@ def list_observations(
         }
         for obs in observations
     ]
+
+
+@router.delete("/{observation_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_observation(
+    observation_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL))],
+) -> None:
+    obs = db.get(Observation, observation_id)
+    if not obs:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Observation not found")
+    
+    db.delete(obs)
+    db.commit()
+    invalidate_areas_cache()
+    invalidate_dashboard_cache()
+
+
+@router.delete("/area/{area_id}", status_code=status.HTTP_200_OK)
+def delete_area_observations(
+    area_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL))],
+) -> dict:
+    from sqlalchemy import delete
+    area = db.get(Area, area_id)
+    if not area:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Area not found")
+    
+    res = db.execute(delete(Observation).where(Observation.area_id == area_id))
+    deleted_count = res.rowcount or 0
+    
+    # Re-run risk engine after observation removal
+    RiskEngine(db).run_for_all_areas()
+    db.commit()
+    invalidate_areas_cache()
+    invalidate_dashboard_cache()
+    
+    return {
+        "success": True,
+        "message": f"Deleted {deleted_count} observations for {area.name}. Risk Engine updated.",
+        "deleted_count": deleted_count,
+    }
+

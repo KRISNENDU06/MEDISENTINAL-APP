@@ -102,6 +102,27 @@ def update_alert_status(
     }
 
 
+@router.delete("/{alert_id}", status_code=status.HTTP_200_OK)
+def delete_alert(
+    alert_id: str,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL))],
+) -> dict:
+    clean_id_str = str(alert_id).replace("alt-", "").replace("alert-", "")
+    raw_id = int(clean_id_str) if clean_id_str.isdigit() else None
+    alert = db.get(Alert, raw_id) if raw_id else None
+    if not alert:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alert not found")
+    
+    title = alert.title
+    db.delete(alert)
+    db.commit()
+    return {
+        "success": True,
+        "message": f"Alert '{title}' deleted successfully.",
+    }
+
+
 def _enrich_alert(db: Session, alert: Alert) -> AlertRead:
     assessment = db.get(RiskAssessment, alert.assessment_id)
     area = db.get(Area, alert.area_id)

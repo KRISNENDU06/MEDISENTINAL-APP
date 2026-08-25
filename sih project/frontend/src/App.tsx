@@ -397,6 +397,7 @@ export const App: React.FC = () => {
         <HealthReportsSection
           onOpenFileReportModal={() => setFileReportModalOpen(true)}
           refreshTrigger={reportsRefreshTrigger}
+          onRefreshAll={() => loadDashboardData(false)}
         />
 
         {/* Risk Explanation Diagnostics Panel */}
@@ -411,7 +412,10 @@ export const App: React.FC = () => {
 
         {/* Historical Baseline vs Current Comparison Matrix (RESTRICTED: Admin & Health Official Only) */}
         {canViewAnomalyMatrix ? (
-          <DataComparisonTable areas={areas} />
+          <DataComparisonTable
+            areas={areas}
+            onRefreshAll={() => loadDashboardData(false)}
+          />
         ) : (
           <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 flex items-center justify-between text-xs text-slate-400">
             <span className="flex items-center gap-2">

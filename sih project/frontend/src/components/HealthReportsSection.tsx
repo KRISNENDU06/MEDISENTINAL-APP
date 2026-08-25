@@ -15,6 +15,7 @@ import {
   Filter,
   CheckCircle2,
   Download,
+  RefreshCw,
 } from 'lucide-react';
 import { api, HealthReport } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -23,17 +24,20 @@ import { useToast } from '../context/ToastContext';
 interface HealthReportsSectionProps {
   onOpenFileReportModal: () => void;
   refreshTrigger?: number;
+  onRefreshAll?: () => void;
 }
 
 export const HealthReportsSection: React.FC<HealthReportsSectionProps> = ({
   onOpenFileReportModal,
   refreshTrigger = 0,
+  onRefreshAll,
 }) => {
   const { user, isAdmin, isHealthOfficial } = useAuth();
   const { showToast } = useToast();
 
   const [reports, setReports] = useState<HealthReport[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [filterRisk, setFilterRisk] = useState<string>('ALL');
   const [expandedReportId, setExpandedReportId] = useState<number | null>(null);
   const [playingReportId, setPlayingReportId] = useState<number | null>(null);
@@ -42,39 +46,20 @@ export const HealthReportsSection: React.FC<HealthReportsSectionProps> = ({
 
   const canCreateReport = isAdmin || isHealthOfficial;
 
-  const SAMPLE_REPORTS: HealthReport[] = [
-    {
-      id: 1,
-      area_id: 1,
-      area_name: 'Area A (Saheed Nagar)',
-      district: 'Bhubaneswar',
-      officer_name: 'Dr. Priya Das',
-      officer_designation: 'District Health Official',
-      report_title: 'Field Surveillance Directive: Vector-Borne Febrile Cluster in Saheed Nagar',
-      observed_signals: '{"fever_cases_surge": "+58% (7-Day)", "otc_paracetamol_demand": "+64%", "vector_larval_density": "High (Breteau Index 38)"}',
-      risk_level: 'HIGH',
-      clinical_notes: 'Door-to-door sentinel survey across 65 households in Sector 4 revealed clustered febrile illness with joint pain. Retail pharmacies report localized stockpiling of antipyretics.',
-      recommendations: '["Deploy municipal vector fogging in Sectors 3 & 4 immediately", "Set up daily fever screening triage booth at UPHC Saheed Nagar", "Distribute free ORS and paracetamol packets through ASHA workers", "Issue public advisory on eliminating stagnant water containers"]',
-      reported_date: new Date().toISOString().split('T')[0],
-      is_public: true,
-      created_at: new Date().toISOString(),
-    },
-  ];
-
   const loadReports = async () => {
     setLoading(true);
     try {
       const data = await api.getHealthReports();
       if (Array.isArray(data)) {
-        setReports(data.length > 0 ? data : SAMPLE_REPORTS);
+        setReports(data);
         if (data.length > 0 && expandedReportId === null) {
           setExpandedReportId(data[0].id);
         }
       } else {
-        setReports(SAMPLE_REPORTS);
+        setReports([]);
       }
     } catch {
-      setReports(SAMPLE_REPORTS);
+      setReports([]);
     } finally {
       setLoading(false);
     }
@@ -84,12 +69,30 @@ export const HealthReportsSection: React.FC<HealthReportsSectionProps> = ({
     loadReports();
   }, [refreshTrigger]);
 
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await loadReports();
+      if (onRefreshAll) {
+        await onRefreshAll();
+      }
+      showToast('info', 'Health Reports Synchronized', 'Official health directives up to date.');
+    } catch {
+      showToast('error', 'Sync Failed', 'Could not refresh health reports.');
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
+  };
+
   const handleDelete = async (reportId: number) => {
     if (!window.confirm('Are you sure you want to remove this official health report?')) return;
     try {
       await api.deleteHealthReport(reportId);
       showToast('info', 'Report Removed', 'Health report has been deleted.');
       loadReports();
+      if (onRefreshAll) {
+        onRefreshAll();
+      }
     } catch (err: any) {
       showToast('error', 'Delete Failed', err.message || 'Could not delete report.');
     }
@@ -201,7 +204,7 @@ export const HealthReportsSection: React.FC<HealthReportsSectionProps> = ({
 
 
 
-  const safeReports = Array.isArray(reports) ? reports : SAMPLE_REPORTS;
+  const safeReports = Array.isArray(reports) ? reports : [];
   const filteredReports = safeReports.filter((r) => {
     if (filterRisk === 'ALL') return true;
     return r && r.risk_level === filterRisk;
@@ -249,6 +252,15 @@ export const HealthReportsSection: React.FC<HealthReportsSectionProps> = ({
           </div>
 
           <button
+            onClick={handleManualRefresh}
+            disabled={isRefreshing}
+            title="Refresh All Health Directives & Reports"
+            className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white transition-all active:scale-95 disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-brand-400' : ''}`} />
+          </button>
+
+          <button
             onClick={onOpenFileReportModal}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 border border-blue-400/30 shadow-lg shadow-blue-950/50 transition-all active:scale-95"
           >
@@ -260,6 +272,15 @@ export const HealthReportsSection: React.FC<HealthReportsSectionProps> = ({
               </span>
             )}
           </button>
+          {canCreateReport && (
+            <button
+              onClick={onOpenFileReportModal}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 border border-blue-400/30 shadow-lg shadow-blue-950/50 transition-all active:scale-95"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>File Official Health Report</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -367,10 +388,10 @@ export const HealthReportsSection: React.FC<HealthReportsSectionProps> = ({
                     </div>
 
 
-                    {(isAdmin || user?.id === report.officer_id) && (
+                    {(isAdmin || isHealthOfficial) && (
                       <button
                         onClick={() => handleDelete(report.id)}
-                        title="Delete Report (Privileged Access)"
+                        title="Delete Official Health Report"
                         className="p-2 rounded-xl bg-slate-800 hover:bg-rose-950/60 text-slate-400 hover:text-rose-400 border border-slate-700 transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" />

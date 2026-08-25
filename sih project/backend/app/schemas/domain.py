@@ -46,8 +46,38 @@ class ActivityLogRead(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: str
     password: str
+
+
+class SendOTPRequest(BaseModel):
+    target: str
+    channel: str = "MOBILE"
+    purpose: str = "REGISTER"
+
+
+class VerifyOTPRequest(BaseModel):
+    target: str
+    otp: str
+    purpose: str = "REGISTER"
+
+
+class RegisterWithOTPRequest(BaseModel):
+    target: str
+    otp: str
+    full_name: str
+    password: str = Field(min_length=8)
+    role: Role = Role.VIEWER
+    district: str | None = "Khurda"
+    ward: str | None = "Saheed Nagar"
+    designation: str | None = None
+    language: str | None = "english"
+
+
+class ResetPasswordOTPRequest(BaseModel):
+    target: str
+    otp: str
+    new_password: str = Field(min_length=8)
 
 
 class AreaRead(BaseModel):
@@ -77,6 +107,22 @@ class ObservationCreate(BaseModel):
     value: float = Field(ge=0)
     source: str = "manual"
     data_quality_score: float = Field(default=1.0, ge=0, le=1)
+
+
+class MultiSignalObservationCreate(BaseModel):
+    area_name: str | None = None
+    district: str | None = None
+    area_id: int | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    observed_on: date
+    medicine_demand: float = Field(default=0.0, ge=0)
+    fever_cases: float = Field(default=0.0, ge=0)
+    water_quality: float | None = Field(default=None, ge=0)
+    pharmacy_source: str = "Retail Chemist Network"
+    hospital_source: str = "Hospital & PHC OPD Register"
+    water_source: str = "Water Quality Surveillance Lab"
+    data_quality_score: float = Field(default=0.95, ge=0, le=1)
 
 
 class ObservationRead(BaseModel):

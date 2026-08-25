@@ -49,7 +49,14 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
       }
       throw new Error(errorDetail);
     }
-    return response.json() as Promise<T>;
+    if (response.status === 204) {
+      return {} as T;
+    }
+    const text = await response.text();
+    if (!text || !text.trim()) {
+      return {} as T;
+    }
+    return JSON.parse(text) as T;
   } catch (err: any) {
     if (err.name === 'TypeError' && err.message?.includes('fetch')) {
       throw new Error(
@@ -63,6 +70,12 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 // -------------------------------------------------------------
 // Type Definitions
 // -------------------------------------------------------------
+
+export interface TokenResponse {
+  access_token: string;
+  refresh_token?: string;
+  token_type?: string;
+}
 
 export interface User {
   id: number;
@@ -259,15 +272,32 @@ export const api = {
     return request<AlertItem[]>(`/api/alerts?${params.toString()}`);
   },
 
-  getActiveAlerts: () => request<AlertItem[]>('/api/alerts/active'),
-
   updateAlertStatus: (alertId: string | number, status: string, rrtDispatched?: boolean) =>
     request<{ success: boolean; message: string; alert: AlertItem }>(`/api/alerts/${alertId}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status, rrtDispatched }),
     }),
 
+  deleteAlert: (alertId: string | number) =>
+    request<void>(`/api/alerts/${alertId}`, {
+      method: 'DELETE',
+    }),
+
   // Observations
+  deleteObservation: (observationId: number) =>
+    request<void>(`/api/observations/${observationId}`, {
+      method: 'DELETE',
+    }),
+
+  deleteAreaObservations: (areaId: number) =>
+    request<{ success: boolean; message: string; deleted_count: number }>(`/api/observations/area/${areaId}`, {
+      method: 'DELETE',
+    }),
+
+  reseedDatabase: () =>
+    request<{ success: boolean; message: string }>('/api/admin/reseed', {
+      method: 'POST',
+    }),
   createObservation: (payload: ObservationInput, autoRunRisk: boolean = true) =>
     request<{
       success: boolean;
@@ -275,6 +305,39 @@ export const api = {
       observation: any;
       generated_alerts: number;
     }>(`/api/observations?auto_run_risk=${autoRunRisk}`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  createMultiSignalObservation: (payload: {
+    area_name?: string;
+    district?: string;
+    area_id?: number;
+    latitude?: number;
+    longitude?: number;
+    observed_on: string;
+    medicine_demand: number;
+    fever_cases: number;
+    water_quality?: number | null;
+    pharmacy_source?: string;
+    hospital_source?: string;
+    water_source?: string;
+    data_quality_score?: number;
+  }, autoRunRisk: boolean = true) =>
+    request<{
+      success: boolean;
+      message: string;
+      area_name: string;
+      district: string;
+      assessment: {
+        risk_score: number;
+        risk_level: string;
+        medicine_score: number;
+        health_score: number;
+        confidence: number;
+      } | null;
+      generated_alerts: number;
+    }>(`/api/observations/multi?auto_run_risk=${autoRunRisk}`, {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
@@ -419,6 +482,45 @@ export const api = {
     }
     return `${API_BASE}/api/audio/tts?${params.toString()}`;
   },
+
+  sendOTP: (target: string, channel: 'MOBILE' | 'EMAIL' = 'MOBILE', purpose: 'REGISTER' | 'RESET_PASSWORD' = 'REGISTER') =>
+    request<{ success: boolean; message: string; channel: string; target: string; expires_in: number }>('/api/auth/send-otp', {
+      method: 'POST',
+      body: JSON.stringify({ target, channel, purpose }),
+    }),
+
+  verifyOTP: (target: string, otp: string, purpose: 'REGISTER' | 'RESET_PASSWORD' = 'REGISTER') =>
+    request<{ success: boolean; message: string; target: string }>('/api/auth/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify({ target, otp, purpose }),
+    }),
+
+  registerWithOTP: (payload: {
+    target: string;
+    otp: string;
+    full_name: string;
+    password: string;
+    role: 'ADMIN' | 'HEALTH_OFFICIAL' | 'VIEWER';
+    district?: string;
+    ward?: string;
+    designation?: string;
+    language?: string;
+  }) =>
+    request<TokenResponse>('/api/auth/register-with-otp', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  resetPasswordWithOTP: (payload: { target: string; otp: string; new_password: string }) =>
+    request<{ success: boolean; message: string }>('/api/auth/reset-password-otp', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  shutdownSystem: () =>
+    request<{ success: boolean; message: string }>('/api/auth/shutdown', {
+      method: 'POST',
+    }),
 };
 
 export interface HealthReport {

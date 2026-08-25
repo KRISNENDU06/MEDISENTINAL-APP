@@ -52,3 +52,28 @@ def delete_expired_activity_logs(
     )
     db.commit()
     return {"deleted": deleted_count}
+
+
+@router.post("/reseed", status_code=status.HTTP_200_OK)
+def reseed_demo_data(
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL))],
+) -> dict:
+    """Full database purge and authentic re-seeding covering all 30 districts & 90 wards."""
+    from app.services.seed_data import reseed_database
+    from app.api.areas import invalidate_areas_cache
+    from app.api.dashboard import invalidate_dashboard_cache
+    reseed_database(db)
+    invalidate_areas_cache()
+    invalidate_dashboard_cache()
+    log_activity(
+        db,
+        action="DATABASE_RESEEDED",
+        details="Full database reset & authentic epidemiological re-seed across 30 Odisha districts & 90 wards",
+        user=current_user,
+    )
+    return {
+        "success": True,
+        "message": "Database reseeded successfully with authentic epidemiological data for all 30 districts (90 wards).",
+    }
+

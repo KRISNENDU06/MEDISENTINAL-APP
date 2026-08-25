@@ -119,28 +119,30 @@ def get_health_report(
     return _format_report(report, area)
 
 
-@router.delete("/{report_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{report_id}", status_code=status.HTTP_200_OK)
 def delete_health_report(
     report_id: int,
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL))],
-) -> None:
-    """Delete a health report (Admin or Authoring Officer only)."""
+) -> dict:
+    """Delete a health report (Admin or Health Official)."""
     report = db.get(HealthReport, report_id)
     if not report:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Health report not found")
 
-    if current_user.role != Role.ADMIN and report.officer_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to delete this report")
-
+    title = report.report_title
     db.delete(report)
     log_activity(
         db,
         action="HEALTH_REPORT_DELETED",
-        details=f"Deleted report ID {report_id} ({report.report_title})",
+        details=f"Deleted report ID {report_id} ({title})",
         user=current_user,
     )
     db.commit()
+    return {
+        "success": True,
+        "message": f"Health report '{title}' deleted successfully.",
+    }
 
 
 def _format_report(report: HealthReport, area: Area | None) -> dict[str, Any]:
