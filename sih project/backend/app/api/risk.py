@@ -11,6 +11,8 @@ from app.models.domain import Role, RiskAssessment, User
 from app.schemas.domain import ComparisonRow, RiskAssessmentRead, RiskRunResponse
 from app.services.audit import log_activity
 from app.services.risk_engine import RiskEngine
+from app.api.areas import invalidate_areas_cache
+from app.api.dashboard import invalidate_dashboard_cache
 
 router = APIRouter(prefix="/risk", tags=["risk"])
 
@@ -32,10 +34,12 @@ def run_risk_engine(
         user=current_user,
     )
     db.commit()
+    invalidate_areas_cache()
+    invalidate_dashboard_cache()
     return RiskRunResponse(
         processed_areas=len(assessments),
         generated_alerts=generated_alerts,
-        assessments=assessments,
+        assessments=[RiskAssessmentRead.model_validate(assessment) for assessment in assessments],
     )
 
 

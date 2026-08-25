@@ -9,6 +9,8 @@ from app.models.domain import Area, Observation, Role, User
 from app.schemas.domain import ObservationCreate, ObservationRead, MultiSignalObservationCreate
 from app.services.audit import log_activity
 from app.services.risk_engine import RiskEngine
+from app.api.areas import invalidate_areas_cache
+from app.api.dashboard import invalidate_dashboard_cache
 
 router = APIRouter(prefix="/observations", tags=["observations"])
 
@@ -594,6 +596,8 @@ def delete_observation(
     
     db.delete(obs)
     db.commit()
+    invalidate_areas_cache()
+    invalidate_dashboard_cache()
 
 
 @router.delete("/area/{area_id}", status_code=status.HTTP_200_OK)
@@ -613,6 +617,8 @@ def delete_area_observations(
     # Re-run risk engine after observation removal
     RiskEngine(db).run_for_all_areas()
     db.commit()
+    invalidate_areas_cache()
+    invalidate_dashboard_cache()
     
     return {
         "success": True,

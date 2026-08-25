@@ -61,7 +61,11 @@ def reseed_demo_data(
 ) -> dict:
     """Full database purge and authentic re-seeding covering all 30 districts & 90 wards."""
     from app.services.seed_data import reseed_database
+    from app.api.areas import invalidate_areas_cache
+    from app.api.dashboard import invalidate_dashboard_cache
     reseed_database(db)
+    invalidate_areas_cache()
+    invalidate_dashboard_cache()
     log_activity(
         db,
         action="DATABASE_RESEEDED",
