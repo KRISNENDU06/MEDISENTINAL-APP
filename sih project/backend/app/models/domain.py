@@ -1,5 +1,6 @@
 from datetime import date, datetime
 from enum import Enum
+from typing import Optional
 
 from sqlalchemy import Boolean, Date, DateTime, Enum as SqlEnum, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -44,7 +45,7 @@ class RefreshToken(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     token_hash: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime, index=True)
-    revoked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
@@ -55,8 +56,8 @@ class Area(Base):
     name: Mapped[str] = mapped_column(String(120), unique=True, index=True)
     district: Mapped[str] = mapped_column(String(120))
     state: Mapped[str] = mapped_column(String(120), default="Odisha")
-    latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
-    longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    latitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    longitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
     observations: Mapped[list["Observation"]] = relationship(back_populates="area")
     assessments: Mapped[list["RiskAssessment"]] = relationship(back_populates="area")
@@ -127,12 +128,12 @@ class ActivityLog(Base):
     __tablename__ = "activity_logs"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
-    user_email: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    user_email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, index=True)
     action: Mapped[str] = mapped_column(String(120), index=True)
     status: Mapped[str] = mapped_column(String(30), default="SUCCESS")
     details: Mapped[str] = mapped_column(Text, default="")
-    ip_address: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    ip_address: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
 
 
@@ -141,7 +142,7 @@ class HealthReport(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     area_id: Mapped[int] = mapped_column(ForeignKey("areas.id"), index=True)
-    officer_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    officer_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
     officer_name: Mapped[str] = mapped_column(String(255))
     officer_designation: Mapped[str] = mapped_column(String(255), default="District Health Officer")
     report_title: Mapped[str] = mapped_column(String(255))

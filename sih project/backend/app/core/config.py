@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
-    backend_cors_origins: str | list[str] = [
+    backend_cors_origins: list[str] = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:3000",
@@ -22,7 +22,7 @@ class Settings(BaseSettings):
         "http://127.0.0.1:8000",
         "*",
     ]
-    allowed_hosts: str | list[str] = ["*"]
+    allowed_hosts: list[str] = ["*"]
     enforce_https: bool = False
     rate_limit_requests: int = 120
     rate_limit_window_seconds: int = 60
@@ -41,31 +41,19 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    @property
-    def cors_origins_list(self) -> list[str]:
-        if isinstance(self.backend_cors_origins, str):
-            val = self.backend_cors_origins.strip()
-            if val.startswith("[") and val.endswith("]"):
-                try:
-                    import json
-                    return json.loads(val)
-                except Exception:
-                    pass
-            return [origin.strip() for origin in val.split(",") if origin.strip()]
-        return list(self.backend_cors_origins)
+    @field_validator("backend_cors_origins", mode="before")
+    @classmethod
+    def split_origins(cls, value: str | list[str]) -> list[str]:
+        if isinstance(value, str):
+            return [origin.strip() for origin in value.split(",") if origin.strip()]
+        return value
 
-    @property
-    def allowed_hosts_list(self) -> list[str]:
-        if isinstance(self.allowed_hosts, str):
-            val = self.allowed_hosts.strip()
-            if val.startswith("[") and val.endswith("]"):
-                try:
-                    import json
-                    return json.loads(val)
-                except Exception:
-                    pass
-            return [host.strip() for host in val.split(",") if host.strip()]
-        return list(self.allowed_hosts)
+    @field_validator("allowed_hosts", mode="before")
+    @classmethod
+    def split_hosts(cls, value: str | list[str]) -> list[str]:
+        if isinstance(value, str):
+            return [host.strip() for host in value.split(",") if host.strip()]
+        return value
 
 
 @lru_cache
