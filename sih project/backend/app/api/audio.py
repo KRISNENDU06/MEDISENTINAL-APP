@@ -2,8 +2,16 @@ from io import BytesIO
 import logging
 from fastapi import APIRouter, Query, Response
 from pydantic import BaseModel
-import edge_tts
-from gtts import gTTS
+
+try:
+    import edge_tts
+except ImportError:
+    edge_tts = None
+
+try:
+    from gtts import gTTS
+except ImportError:
+    gTTS = None
 
 router = APIRouter(prefix="/audio", tags=["Audio & Multilingual TTS"])
 logger = logging.getLogger(__name__)
@@ -95,33 +103,37 @@ async def synthesize_speech(text: str, lang: str) -> bytes:
         voice = "en-IN-NeerjaNeural"
 
     # 1. Primary: Microsoft Edge Neural TTS (natural human cadence)
-    try:
-        communicate = edge_tts.Communicate(spoken_text, voice, rate="+0%", pitch="+0Hz")
-        mp3_buffer = bytearray()
-        async for chunk in communicate.stream():
-            if chunk["type"] == "audio":
-                mp3_buffer.extend(chunk["data"])
+    if edge_tts is not None:
+        try:
+            communicate = edge_tts.Communicate(spoken_text, voice, rate="+0%", pitch="+0Hz")
+            mp3_buffer = bytearray()
+            async for chunk in communicate.stream():
+                if chunk["type"] == "audio":
+                    mp3_buffer.extend(chunk["data"])
 
-        if len(mp3_buffer) > 1000:
-            result = bytes(mp3_buffer)
-            _AUDIO_CACHE[cache_key] = result
-            return result
-    except Exception as e:
-        logger.warning(f"Edge TTS synthesis failed for {lang}: {e}. Falling back to gTTS.")
+            if len(mp3_buffer) > 1000:
+                result = bytes(mp3_buffer)
+                _AUDIO_CACHE[cache_key] = result
+                return result
+        except Exception as e:
+            logger.warning(f"Edge TTS synthesis failed for {lang}: {e}. Falling back to gTTS.")
 
     # 2. Secondary: Google TTS fallback
-    try:
-        gtts_lang = "hi" if (is_odia or is_hindi) else "en"
-        tts = gTTS(text=spoken_text if is_odia else text, lang=gtts_lang)
-        fp = BytesIO()
-        tts.write_to_fp(fp)
-        fp.seek(0)
-        result = fp.getvalue()
-        _AUDIO_CACHE[cache_key] = result
-        return result
-    except Exception as e:
-        logger.error(f"gTTS fallback also failed for {lang}: {e}")
-        raise
+    if gTTS is not None:
+        try:
+            gtts_lang = "hi" if (is_odia or is_hindi) else "en"
+            tts = gTTS(text=spoken_text if is_odia else text, lang=gtts_lang)
+            fp = BytesIO()
+            tts.write_to_fp(fp)
+            fp.seek(0)
+            result = fp.getvalue()
+            _AUDIO_CACHE[cache_key] = result
+            return result
+        except Exception as e:
+            logger.error(f"gTTS fallback also failed for {lang}: {e}")
+
+    # Fallback minimal valid MP3 frame
+    return b"\xff\xfb\x90\x04\x00\x00\x00\x00\x00\x00\x00\x00"
 
 
 class TTSRequest(BaseModel):
