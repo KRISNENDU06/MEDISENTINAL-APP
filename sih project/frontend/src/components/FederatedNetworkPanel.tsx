@@ -1,59 +1,20 @@
 import React from 'react';
 import { Network, ShieldCheck, Database, Activity, RefreshCw } from 'lucide-react';
-import { FederatedNode } from '../services/api';
+import { FederatedNode } from '../services/federatedApi';
 
-interface Props {
-  nodes: FederatedNode[];
-  onRefresh: () => void;
-  onSimulate: () => void;
-  loading?: boolean;
-  simulating?: boolean;
-}
+interface Props { nodes: FederatedNode[]; onRefresh: () => void; onSimulate: () => void; loading?: boolean; simulating?: boolean; lastRound?: { generated_alerts: number; signals_ingested: number; areas_assessed: number } | null; }
 
-export const FederatedNetworkPanel: React.FC<Props> = ({ nodes, onRefresh, onSimulate, loading, simulating }) => {
+export const FederatedNetworkPanel: React.FC<Props> = ({ nodes, onRefresh, onSimulate, loading, simulating, lastRound }) => {
   const connected = nodes.filter((n) => n.status === 'CONNECTED').length;
   return (
     <section className="glass-panel rounded-2xl border border-emerald-500/20 overflow-hidden">
       <div className="p-4 border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <Network className="w-5 h-5 text-emerald-400" />
-            <h3 className="text-sm font-black text-white uppercase tracking-wider">Federated Health Network</h3>
-            <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">PRIVACY-FIRST</span>
-          </div>
-          <p className="text-xs text-slate-400 mt-1">Local processing • privacy protection • aggregated signals only</p>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={onRefresh} className="px-3 py-2 rounded-xl bg-slate-800 text-slate-200 text-xs font-semibold hover:bg-slate-700 flex items-center gap-1.5">
-            <RefreshCw className="w-3.5 h-3.5" /> Refresh
-          </button>
-          <button onClick={onSimulate} disabled={simulating} className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-500 disabled:opacity-50 flex items-center gap-1.5">
-            <Activity className="w-3.5 h-3.5" /> {simulating ? 'Processing…' : 'Run Federated Round'}
-          </button>
-        </div>
+        <div><div className="flex items-center gap-2"><Network className="w-5 h-5 text-emerald-400" /><h3 className="text-sm font-black text-white uppercase tracking-wider">Federated Health Network</h3><span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">PRIVACY-FIRST</span></div><p className="text-xs text-slate-400 mt-1">Local processing • differential privacy • aggregated signals only</p></div>
+        <div className="flex gap-2"><button onClick={onRefresh} disabled={loading || simulating} className="px-3 py-2 rounded-xl bg-slate-800 text-slate-200 text-xs font-semibold hover:bg-slate-700 disabled:opacity-50 flex items-center gap-1.5"><RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh</button><button onClick={onSimulate} disabled={simulating} className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-500 disabled:opacity-50 flex items-center gap-1.5"><Activity className="w-3.5 h-3.5" /> {simulating ? 'Processing…' : 'Run Federated Round'}</button></div>
       </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-slate-800/60">
-        <div className="bg-slate-950/60 p-3"><div className="text-[10px] text-slate-500 uppercase">Connected Nodes</div><div className="text-xl font-black text-emerald-400 mt-1">{connected}/{nodes.length}</div></div>
-        <div className="bg-slate-950/60 p-3"><div className="text-[10px] text-slate-500 uppercase">Raw Records Shared</div><div className="text-xl font-black text-white mt-1">0</div></div>
-        <div className="bg-slate-950/60 p-3"><div className="text-[10px] text-slate-500 uppercase">Privacy</div><div className="text-sm font-black text-emerald-400 mt-2">DIFFERENTIAL</div></div>
-        <div className="bg-slate-950/60 p-3"><div className="text-[10px] text-slate-500 uppercase">Processing</div><div className="text-sm font-black text-cyan-400 mt-2">LOCAL NODES</div></div>
-      </div>
-
-      <div className="divide-y divide-slate-800/70">
-        {loading ? <div className="p-5 text-xs text-slate-500">Loading federated nodes…</div> : nodes.map((node) => (
-          <div key={node.node_id} className="p-3.5 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${node.status === 'CONNECTED' ? 'bg-emerald-400 shadow-lg shadow-emerald-400/40' : 'bg-amber-400'}`} />
-              <div className="min-w-0"><div className="text-xs font-bold text-slate-200 truncate">{node.name}</div><div className="text-[10px] text-slate-500">{node.type} • {node.location} • {node.node_id}</div></div>
-            </div>
-            <div className="flex items-center gap-3 shrink-0 text-[10px]">
-              <span className="hidden sm:flex items-center gap-1 text-slate-500"><Database className="w-3 h-3" /> {node.signals_sent} signals</span>
-              <span className="flex items-center gap-1 text-emerald-400"><ShieldCheck className="w-3 h-3" /> No raw data</span>
-            </div>
-          </div>
-        ))}
-      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-slate-800/60"><div className="bg-slate-950/60 p-3"><div className="text-[10px] text-slate-500 uppercase">Connected Nodes</div><div className="text-xl font-black text-emerald-400 mt-1">{connected}/{nodes.length}</div></div><div className="bg-slate-950/60 p-3"><div className="text-[10px] text-slate-500 uppercase">Raw Records Shared</div><div className="text-xl font-black text-white mt-1">0</div></div><div className="bg-slate-950/60 p-3"><div className="text-[10px] text-slate-500 uppercase">Privacy</div><div className="text-sm font-black text-emerald-400 mt-2">DIFFERENTIAL</div></div><div className="bg-slate-950/60 p-3"><div className="text-[10px] text-slate-500 uppercase">Risk Engine</div><div className="text-sm font-black text-cyan-400 mt-2">{lastRound ? 'EXECUTED' : 'READY'}</div></div></div>
+      <div className="divide-y divide-slate-800/70">{loading ? <div className="p-5 text-xs text-slate-500">Loading federated nodes…</div> : nodes.map((node) => <div key={node.node_id} className="p-3.5 flex items-center justify-between gap-3"><div className="flex items-center gap-3 min-w-0"><span className="w-2.5 h-2.5 rounded-full shrink-0 bg-emerald-400 shadow-lg shadow-emerald-400/40" /><div className="min-w-0"><div className="text-xs font-bold text-slate-200 truncate">{node.name}</div><div className="text-[10px] text-slate-500">{node.type} • {node.location} • {node.node_id}</div></div></div><div className="flex items-center gap-3 shrink-0 text-[10px]"><span className="hidden sm:flex items-center gap-1 text-slate-500"><Database className="w-3 h-3" /> {node.signals_sent} signals</span><span className="flex items-center gap-1 text-emerald-400"><ShieldCheck className="w-3 h-3" /> No raw data</span></div></div>)}</div>
+      {lastRound && <div className="px-4 py-3 bg-emerald-500/5 text-[10px] text-emerald-300">Last round: {lastRound.areas_assessed} areas assessed • {lastRound.signals_ingested} noisy signals ingested • {lastRound.generated_alerts} alerts generated.</div>}
     </section>
   );
 };
