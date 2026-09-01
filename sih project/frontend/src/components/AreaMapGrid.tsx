@@ -25,6 +25,7 @@ interface AreaMapGridProps {
 }
 
 const JURY_CHANGE_KEY = 'medisentinel:last-jury-change';
+const JURY_AUTO_OPEN_KEY = 'medisentinel:jury-auto-open';
 
 export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
   areas,
@@ -35,8 +36,8 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
   const [viewMode, setViewMode] = useState<'map' | 'grid'>('map');
   const [selectedDistrict, setSelectedDistrict] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  // Prevent the same persisted jury scenario from reopening the drill-down
-  // every time App.tsx re-renders. A new scenario gets a new raw value.
+  // A jury run creates a one-shot auto-open token. It is consumed below so
+  // closing the drill-down never causes the same modal to reopen.
   const lastAutoOpenedJuryChange = useRef<string | null>(null);
 
   const distinctDistricts = useMemo(() => {
@@ -60,12 +61,13 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
     });
   }, [areas, selectedDistrict, searchQuery]);
 
-  // After a NEW Jury Demo, focus the exact ward and open the existing
-  // drill-down once. Closing the modal must not cause it to reopen.
+  // A jury submission requests one automatic drill-down after the page refresh.
+  // Consume that request immediately; never use the persistent "latest change"
+  // record as an auto-open trigger.
   useEffect(() => {
     if (loading || !areas.length) return;
     try {
-      const raw = localStorage.getItem(JURY_CHANGE_KEY);
+      const raw = localStorage.getItem(JURY_AUTO_OPEN_KEY);
       if (!raw || raw === lastAutoOpenedJuryChange.current) return;
 
       const change = JSON.parse(raw);
@@ -78,14 +80,15 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
       );
 
       if (match) {
-        // Mark this exact scenario before opening. App re-renders will not
-        // reopen it because the persisted value is already acknowledged.
+        // Consume before opening. This is the critical fix: after the user
+        // closes the modal, React re-renders cannot reopen it.
         lastAutoOpenedJuryChange.current = raw;
+        localStorage.removeItem(JURY_AUTO_OPEN_KEY);
         setSelectedDistrict(match.district);
         onSelectArea(match);
       }
     } catch {
-      // Ignore malformed browser-local demo state.
+      localStorage.removeItem(JURY_AUTO_OPEN_KEY);
     }
   }, [areas, loading, onSelectArea]);
 
