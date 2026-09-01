@@ -279,20 +279,10 @@ def reset_password_with_otp(
 
 @router.post("/shutdown")
 def shutdown_app(request: Request) -> dict:
-    """Safe shutdown endpoint to stop local backend & frontend processes."""
-    def terminate():
-        time.sleep(0.8)
-        try:
-            os.system('taskkill /F /IM uvicorn.exe /T >nul 2>&1')
-            os.system('taskkill /F /IM node.exe /T >nul 2>&1')
-        except Exception:
-            pass
-        os._exit(0)
-
-    threading.Thread(target=terminate, daemon=True).start()
+    """Safe session exit acknowledgement endpoint without terminating server processes."""
     return {
         "success": True,
-        "message": "MEDISENTINEL processes are terminating safely.",
+        "message": "MEDISENTINEL session closed safely. Servers remain active.",
     }
 
 

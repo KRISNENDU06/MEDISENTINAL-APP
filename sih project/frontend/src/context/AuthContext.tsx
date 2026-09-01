@@ -154,8 +154,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const shutdownApp = async (): Promise<boolean> => {
     try {
-      showToast('info', 'Shutting Down', 'Closing MEDISENTINEL background services and terminal processes...');
-      await api.shutdownSystem();
+      localStorage.removeItem('sih_auth_token');
+      setToken(null);
+      setUser(null);
+      showToast('info', 'Session Exited', 'You have safely closed your session.');
+      await api.shutdownSystem().catch(() => {});
       return true;
     } catch {
       return true;

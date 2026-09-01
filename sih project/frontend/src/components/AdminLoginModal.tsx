@@ -235,17 +235,14 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ isOpen, onClos
     }
   };
 
-  // System Shutdown Handler
+  // Exit / Close App Handler
   const handleShutdownApp = async () => {
-    if (
-      window.confirm(
-        '⚠️ SHUTDOWN CONFIRMATION:\n\nAre you sure you want to stop all MEDISENTINEL background servers and terminate the application command prompt processes?'
-      )
-    ) {
+    if (window.confirm('Are you sure you want to exit the application and close your session?')) {
       await shutdownApp();
-      setTimeout(() => {
+      onClose();
+      try {
         window.close();
-      }, 1200);
+      } catch {}
     }
   };
 
@@ -837,7 +834,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ isOpen, onClos
 
           <button
             onClick={handleShutdownApp}
-            title="Cleanly stop all backend & frontend processes"
+            title="Exit application and close session"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/30 text-rose-300 hover:text-rose-100 font-semibold transition-all active:scale-95"
           >
             <Power className="w-3 h-3 text-rose-400" />
