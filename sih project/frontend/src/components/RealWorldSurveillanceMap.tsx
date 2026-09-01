@@ -342,24 +342,27 @@ export const RealWorldSurveillanceMap: React.FC<RealWorldSurveillanceMapProps> =
     }
   }, [theme]);
 
-  // Helper to create appropriate TileLayer instance
+  // Helper to create appropriate TileLayer instance using Google Maps
   const createTileLayer = (style: 'dark' | 'streets' | 'satellite'): L.TileLayer => {
     if (style === 'satellite') {
-      return L.tileLayer(
-        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        { maxZoom: 18, maxNativeZoom: 18 }
-      );
-    }
-    if (style === 'streets') {
-      return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        subdomains: 'abc',
+      // Google Maps Photorealistic Satellite with Roads & City Labels
+      return L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
       });
     }
-    // Dark Mode (Fastly CDN mirror - 100% Free, keyless, zero watermarks)
-    return L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      subdomains: 'abcd',
+    if (style === 'streets') {
+      // Google Maps Classic Roadmap
+      return L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      });
+    }
+    // Google Maps Dark / Night Mode Surveillance Tiles
+    return L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+      maxZoom: 20,
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      className: 'google-map-dark-tiles',
     });
   };
 
@@ -636,7 +639,7 @@ export const RealWorldSurveillanceMap: React.FC<RealWorldSurveillanceMapProps> =
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            Dark Tile
+            Google Dark
           </button>
           <button
             onClick={() => setMapStyle('streets')}
@@ -646,7 +649,7 @@ export const RealWorldSurveillanceMap: React.FC<RealWorldSurveillanceMapProps> =
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            Streets
+            Google Streets
           </button>
           <button
             onClick={() => setMapStyle('satellite')}
@@ -656,7 +659,7 @@ export const RealWorldSurveillanceMap: React.FC<RealWorldSurveillanceMapProps> =
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            Satellite
+            Google Satellite
           </button>
         </div>
       </div>

@@ -34,6 +34,11 @@
   }
 }
 
+/* Google Maps Dark / Night Mode Tiles */
+.google-map-dark-tiles {
+  filter: invert(92%) hue-rotate(180deg) brightness(85%) contrast(115%) !important;
+}
+
 /* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
