@@ -11,6 +11,36 @@
   </head>
   <body class="bg-slate-950 text-slate-100 antialiased selection:bg-brand-500 selection:text-white min-h-screen">
     <div id="root"></div>
+    <!-- Mobile-safe emergency exit for the drill-down modal. This is intentionally
+         framework-independent so the user can always leave the modal even if a
+         React event handler is blocked by a browser/WebView event issue. -->
+    <script>
+      (function () {
+        function isDrillDownExit(target) {
+          var el = target && target.closest ? target.closest('button') : null;
+          if (!el) return false;
+          var label = (el.getAttribute('aria-label') || '').toLowerCase();
+          var text = (el.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+          return label === 'return to surveillance overview' ||
+            label === 'close drill-down analysis' ||
+            text.indexOf('return to overview') !== -1 ||
+            text.indexOf('return to surveillance map') !== -1;
+        }
+
+        function exitDrillDown(event) {
+          if (!isDrillDownExit(event.target)) return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          // A normal document navigation guarantees that the React modal state
+          // is reset, even when the component's click handler cannot fire.
+          window.location.replace(window.location.href.split('#')[0]);
+        }
+
+        document.addEventListener('click', exitDrillDown, true);
+        document.addEventListener('pointerup', exitDrillDown, true);
+        document.addEventListener('touchend', exitDrillDown, true);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
