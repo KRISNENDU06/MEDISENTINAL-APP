@@ -8,21 +8,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 from app.api import (
-    admin,
-    alerts,
-    areas,
-    audio,
-    auth,
-    chat,
-    copilot,
-    dashboard,
-    observations,
-    privacy,
-    reports,
-    response,
-    risk,
-    simulation,
-    telemetry,
+    admin, alerts, areas, audio, auth, chat, copilot, dashboard, observations,
+    privacy, reports, response, risk, simulation, telemetry, federated,
 )
 from app.core.config import get_settings
 from app.core.middleware import RateLimitMiddleware, SecurityHeadersMiddleware
@@ -52,23 +39,10 @@ app = FastAPI(
     description="MEDISENTINEL - Community-Level Health Risk Early Warning & Outbreak Prediction Platform. Tagline: YOUR HEALTH, OUR WATCH.",
     lifespan=lifespan,
 )
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.backend_cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
+app.add_middleware(CORSMiddleware, allow_origins=settings.backend_cors_origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 app.add_middleware(SecurityHeadersMiddleware)
-app.add_middleware(
-    RateLimitMiddleware,
-    requests_per_window=settings.rate_limit_requests,
-    window_seconds=settings.rate_limit_window_seconds,
-)
+app.add_middleware(RateLimitMiddleware, requests_per_window=settings.rate_limit_requests, window_seconds=settings.rate_limit_window_seconds)
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts)
-
 if settings.enforce_https:
     app.add_middleware(HTTPSRedirectMiddleware)
 
@@ -80,12 +54,7 @@ def health() -> dict[str, str]:
 
 @app.api_route("/", methods=["GET", "HEAD"])
 def root() -> dict[str, str]:
-    return {
-        "status": "MEDISENTINEL Early Warning Platform Active",
-        "tagline": "YOUR HEALTH, OUR WATCH",
-        "docs": "/docs",
-        "health": "/health",
-    }
+    return {"status": "MEDISENTINEL Early Warning Platform Active", "tagline": "YOUR HEALTH, OUR WATCH", "docs": "/docs", "health": "/health"}
 
 
 app.include_router(auth.router, prefix="/api")
@@ -103,11 +72,13 @@ app.include_router(chat.router, prefix="/api")
 app.include_router(reports.router, prefix="/api")
 app.include_router(telemetry.router, prefix="/api")
 app.include_router(audio.router, prefix="/api")
+app.include_router(federated.router, prefix="/api")
 
 frontend_dist = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"))
 assets_dir = os.path.join(frontend_dist, "assets")
 if os.path.isdir(assets_dir):
     app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
 
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
