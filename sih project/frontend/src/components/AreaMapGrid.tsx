@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { AreaSummary } from '../services/api';
 import { RealWorldSurveillanceMap } from './RealWorldSurveillanceMap';
 import {
@@ -24,6 +24,8 @@ interface AreaMapGridProps {
   loading: boolean;
 }
 
+const JURY_CHANGE_KEY = 'medisentinel:last-jury-change';
+
 export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
   areas,
   selectedArea,
@@ -34,7 +36,6 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
   const [selectedDistrict, setSelectedDistrict] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // Extract unique sorted districts
   const distinctDistricts = useMemo(() => {
     const set = new Set<string>();
     areas.forEach((a) => {
@@ -43,7 +44,6 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
     return Array.from(set).sort();
   }, [areas]);
 
-  // Filtered areas based on district and search query
   const filteredAreas = useMemo(() => {
     return areas.filter((a) => {
       const matchesDistrict =
@@ -56,6 +56,30 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
       return matchesDistrict && matchesSearch;
     });
   }, [areas, selectedDistrict, searchQuery]);
+
+  // After a Jury Demo, focus the exact ward that was changed and open the
+  // existing full drill-down automatically. This makes the jury flow visibly
+  // trace: scenario change -> geospatial node -> complete analysis.
+  useEffect(() => {
+    if (loading || !areas.length) return;
+    try {
+      const raw = localStorage.getItem(JURY_CHANGE_KEY);
+      if (!raw) return;
+      const change = JSON.parse(raw);
+      if (!change?.ward || !change?.district) return;
+      const match = areas.find(
+        (a) =>
+          a.name.toLowerCase() === String(change.ward).toLowerCase() &&
+          a.district.toLowerCase() === String(change.district).toLowerCase()
+      );
+      if (match) {
+        setSelectedDistrict(match.district);
+        onSelectArea(match);
+      }
+    } catch {
+      // Ignore malformed browser-local demo state.
+    }
+  }, [areas, loading, onSelectArea]);
 
   const getRiskBorder = (level: string) => {
     switch (level) {
@@ -79,9 +103,13 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
     }
   };
 
+  let latestJuryChange: any = null;
+  try {
+    latestJuryChange = JSON.parse(localStorage.getItem(JURY_CHANGE_KEY) || 'null');
+  } catch {}
+
   return (
     <div className="space-y-4">
-      {/* Header & Return / View Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
           <h3 className="text-base font-bold text-white flex items-center gap-2">
@@ -94,7 +122,6 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* District Dropdown Selector */}
           <div className="flex items-center gap-1 bg-slate-950 px-2.5 py-1.5 rounded-xl border border-slate-800 text-xs">
             <Filter className="w-3.5 h-3.5 text-brand-400" />
             <select
@@ -114,7 +141,6 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
             </select>
           </div>
 
-          {/* Quick Search Bar */}
           <div className="relative">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
@@ -126,14 +152,11 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
             />
           </div>
 
-          {/* View Mode Toggle: Real-World Map vs Grid */}
           <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800">
             <button
               onClick={() => setViewMode('map')}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
-                viewMode === 'map'
-                  ? 'bg-brand-500 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
+                viewMode === 'map' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-400 hover:text-white'
               }`}
             >
               <Globe className="w-3.5 h-3.5" />
@@ -142,9 +165,7 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
             <button
               onClick={() => setViewMode('grid')}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
-                viewMode === 'grid'
-                  ? 'bg-brand-500 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
+                viewMode === 'grid' ? 'bg-brand-500 text-white shadow-md' : 'text-slate-400 hover:text-white'
               }`}
             >
               <Grid className="w-3.5 h-3.5" />
@@ -154,10 +175,23 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
         </div>
       </div>
 
-      {/* Main Content Layout */}
+      {latestJuryChange && (
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <div className="min-w-0">
+              <div className="text-[10px] font-black uppercase tracking-wider text-amber-300">Latest Jury Change Synced</div>
+              <div className="text-xs text-slate-300 truncate">{latestJuryChange.district} • {latestJuryChange.ward}</div>
+            </div>
+          </div>
+          <div className="text-[10px] text-slate-400 font-mono shrink-0">
+            Med {latestJuryChange.medicine} • Fever {latestJuryChange.fever} • Water {latestJuryChange.water}
+          </div>
+        </div>
+      )}
+
       {viewMode === 'map' ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          {/* Left / Main: Real-World Leaflet Map */}
           <div className="lg:col-span-8">
             <RealWorldSurveillanceMap
               areas={filteredAreas}
@@ -166,7 +200,6 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
             />
           </div>
 
-          {/* Right: Selected Area Surveillance Summary */}
           <div className="lg:col-span-4 glass-panel rounded-2xl p-5 border border-slate-800 flex flex-col justify-between space-y-4">
             <div>
               <div className="flex items-center justify-between pb-3 border-b border-slate-800">
@@ -174,11 +207,7 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
                   Target Catchment Telemetry
                 </span>
                 {selectedArea && (
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getRiskBadge(
-                      selectedArea.riskLevel
-                    )}`}
-                  >
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getRiskBadge(selectedArea.riskLevel)}`}>
                     {selectedArea.riskLevel}
                   </span>
                 )}
@@ -191,51 +220,25 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
                     <p className="text-xs text-slate-400">District: {selectedArea.district}</p>
                   </div>
 
-                  {/* 3 Main Signal Pills */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/80 border border-slate-800/80 text-xs">
-                      <span className="flex items-center gap-1.5 text-slate-300">
-                        <Pill className="w-3.5 h-3.5 text-brand-400" />
-                        Medicine Demand
-                      </span>
-                      <span className="font-bold text-white font-mono">
-                        {selectedArea.signals?.medicineDemand?.current ?? 0} (
-                        {selectedArea.signals?.medicineDemand?.deviation || '+0%'})
-                      </span>
+                      <span className="flex items-center gap-1.5 text-slate-300"><Pill className="w-3.5 h-3.5 text-brand-400" />Medicine Demand</span>
+                      <span className="font-bold text-white font-mono">{selectedArea.signals?.medicineDemand?.current ?? 0} ({selectedArea.signals?.medicineDemand?.deviation || '+0%'})</span>
                     </div>
-
                     <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/80 border border-slate-800/80 text-xs">
-                      <span className="flex items-center gap-1.5 text-slate-300">
-                        <Thermometer className="w-3.5 h-3.5 text-rose-400" />
-                        Fever Symptoms
-                      </span>
-                      <span className="font-bold text-white font-mono">
-                        {selectedArea.signals?.feverIndicators?.current ?? 0} (
-                        {selectedArea.signals?.feverIndicators?.deviation || '+0%'})
-                      </span>
+                      <span className="flex items-center gap-1.5 text-slate-300"><Thermometer className="w-3.5 h-3.5 text-rose-400" />Fever Symptoms</span>
+                      <span className="font-bold text-white font-mono">{selectedArea.signals?.feverIndicators?.current ?? 0} ({selectedArea.signals?.feverIndicators?.deviation || '+0%'})</span>
                     </div>
-
                     <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/80 border border-slate-800/80 text-xs">
-                      <span className="flex items-center gap-1.5 text-slate-300">
-                        <Stethoscope className="w-3.5 h-3.5 text-sky-400" />
-                        Clinic Visits
-                      </span>
-                      <span className="font-bold text-white font-mono">
-                        {selectedArea.signals?.clinicVisits?.current ?? 0} (
-                        {selectedArea.signals?.clinicVisits?.deviation || '+0%'})
-                      </span>
+                      <span className="flex items-center gap-1.5 text-slate-300"><Stethoscope className="w-3.5 h-3.5 text-sky-400" />Clinic Visits</span>
+                      <span className="font-bold text-white font-mono">{selectedArea.signals?.clinicVisits?.current ?? 0} ({selectedArea.signals?.clinicVisits?.deviation || '+0%'})</span>
                     </div>
                   </div>
 
-                  {/* Anomaly finding snippet */}
-                  <div className="p-3 rounded-xl bg-slate-950/90 border border-slate-800 text-xs text-slate-300 italic">
-                    "{selectedArea.explanation}"
-                  </div>
+                  <div className="p-3 rounded-xl bg-slate-950/90 border border-slate-800 text-xs text-slate-300 italic">"{selectedArea.explanation}"</div>
                 </div>
               ) : (
-                <div className="py-8 text-center text-slate-400 text-xs">
-                  Click on any ward node on the map to inspect its real-time telemetry.
-                </div>
+                <div className="py-8 text-center text-slate-400 text-xs">Click on any ward node on the map to inspect its real-time telemetry.</div>
               )}
             </div>
 
@@ -251,7 +254,6 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
           </div>
         </div>
       ) : (
-        /* Grid Cards View */
         filteredAreas.length === 0 ? (
           <div className="py-12 text-center glass-panel rounded-2xl border border-slate-800 text-slate-400">
             <MapPin className="w-8 h-8 text-slate-600 mx-auto mb-2" />
@@ -266,29 +268,14 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
                 <div
                   key={area.id}
                   onClick={() => onSelectArea(area)}
-                  className={`glass-panel rounded-2xl p-4 cursor-pointer transition-all duration-200 border relative overflow-hidden flex flex-col justify-between min-h-[170px] ${
-                    isSelected ? 'ring-2 ring-brand-500 shadow-lg shadow-emerald-950/30' : ''
-                  } ${getRiskBorder(area.riskLevel)}`}
+                  className={`glass-panel rounded-2xl p-4 cursor-pointer transition-all duration-200 border relative overflow-hidden flex flex-col justify-between min-h-[170px] ${isSelected ? 'ring-2 ring-brand-500 shadow-lg shadow-emerald-950/30' : ''} ${getRiskBorder(area.riskLevel)}`}
                 >
                   <div>
                     <div className="flex items-start justify-between gap-1 mb-2">
-                      <span className="text-[10px] font-mono text-slate-400 truncate">
-                        {area.district}
-                      </span>
-                      <span
-                        className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full border ${getRiskBadge(
-                          area.riskLevel
-                        )}`}
-                      >
-                        {area.riskLevel}
-                      </span>
+                      <span className="text-[10px] font-mono text-slate-400 truncate">{area.district}</span>
+                      <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full border ${getRiskBadge(area.riskLevel)}`}>{area.riskLevel}</span>
                     </div>
-
-                    <h4 className="text-sm font-bold text-white leading-snug line-clamp-1">
-                      {area.name}
-                    </h4>
-
-                    {/* Mini Spark Indicator */}
+                    <h4 className="text-sm font-bold text-white leading-snug line-clamp-1">{area.name}</h4>
                     <div className="mt-3 flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-800/80">
                       <span>Composite Risk</span>
                       <span className="font-bold text-white font-mono">{area.riskScore}/100</span>
@@ -297,22 +284,12 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
 
                   <div className="space-y-1 pt-2 border-t border-slate-800/80 text-[11px]">
                     <div className="flex items-center justify-between text-slate-400">
-                      <span className="flex items-center gap-1">
-                        <Pill className="w-3 h-3 text-brand-400" />
-                        Meds Spike:
-                      </span>
-                      <span className="font-bold text-white">
-                        {area.signals?.medicineDemand?.deviation || '+0%'}
-                      </span>
+                      <span className="flex items-center gap-1"><Pill className="w-3 h-3 text-brand-400" />Meds Spike:</span>
+                      <span className="font-bold text-white">{area.signals?.medicineDemand?.deviation || '+0%'}</span>
                     </div>
                     <div className="flex items-center justify-between text-slate-400">
-                      <span className="flex items-center gap-1">
-                        <Thermometer className="w-3 h-3 text-rose-400" />
-                        Fever Spike:
-                      </span>
-                      <span className="font-bold text-white">
-                        {area.signals?.feverIndicators?.deviation || '+0%'}
-                      </span>
+                      <span className="flex items-center gap-1"><Thermometer className="w-3 h-3 text-rose-400" />Fever Spike:</span>
+                      <span className="font-bold text-white">{area.signals?.feverIndicators?.deviation || '+0%'}</span>
                     </div>
                   </div>
                 </div>
