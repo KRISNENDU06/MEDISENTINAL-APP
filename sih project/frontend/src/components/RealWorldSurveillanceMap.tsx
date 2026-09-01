@@ -342,33 +342,41 @@ export const RealWorldSurveillanceMap: React.FC<RealWorldSurveillanceMapProps> =
     }
   }, [theme]);
 
-  // Helper to create appropriate TileLayer instance using Google Maps
+  // Helper to create appropriate TileLayer instance using Google Maps CDN
   const createTileLayer = (style: 'dark' | 'streets' | 'satellite'): L.TileLayer => {
     if (style === 'satellite') {
-      // Google Maps Photorealistic Satellite with Roads & City Labels
-      return L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+      // Google Maps Photorealistic Hybrid Satellite (Roads + City Labels)
+      return L.tileLayer('https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
         maxZoom: 20,
-        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        subdomains: '0123',
+        keepBuffer: 8,
+        updateWhenIdle: false,
       });
     }
     if (style === 'streets') {
-      // Google Maps Classic Roadmap
-      return L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+      // Google Maps Classic Standard Roadmap
+      return L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
         maxZoom: 20,
-        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        subdomains: '0123',
+        keepBuffer: 8,
+        updateWhenIdle: false,
       });
     }
-    // Google Maps Dark / Night Mode Surveillance Tiles
-    return L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+    // Google Maps Dark / Night Mode Surveillance
+    return L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
       maxZoom: 20,
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      subdomains: '0123',
+      keepBuffer: 8,
+      updateWhenIdle: false,
       className: 'google-map-dark-tiles',
     });
   };
 
-  // Initialize Leaflet Map Canvas
+  // Initialize Leaflet Map Canvas & Resize Handlers
   useEffect(() => {
     if (!mapContainerRef.current) return;
+
+    let resizeObserver: ResizeObserver | null = null;
 
     if (!mapInstanceRef.current) {
       const map = L.map(mapContainerRef.current, {
@@ -376,6 +384,8 @@ export const RealWorldSurveillanceMap: React.FC<RealWorldSurveillanceMapProps> =
         zoom: 8,
         zoomControl: false,
         attributionControl: false,
+        fadeAnimation: true,
+        zoomAnimation: true,
       });
 
       const tiles = createTileLayer(mapStyle).addTo(map);
@@ -383,14 +393,29 @@ export const RealWorldSurveillanceMap: React.FC<RealWorldSurveillanceMapProps> =
       tileLayerRef.current = tiles;
       markersGroupRef.current = L.layerGroup().addTo(map);
       mapInstanceRef.current = map;
-    }
 
-    return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
+      // Ensure all tiles are rendered regardless of layout flex timing
+      const t1 = setTimeout(() => map.invalidateSize(), 150);
+      const t2 = setTimeout(() => map.invalidateSize(), 500);
+
+      // Auto-invalidate size on container dimension changes
+      if (window.ResizeObserver && mapContainerRef.current) {
+        resizeObserver = new ResizeObserver(() => {
+          map.invalidateSize();
+        });
+        resizeObserver.observe(mapContainerRef.current);
       }
-    };
+
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+        if (resizeObserver) resizeObserver.disconnect();
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.remove();
+          mapInstanceRef.current = null;
+        }
+      };
+    }
   }, []);
 
   // Update Tile Layer cleanly on Style Change (Dark, Streets, Satellite)
@@ -405,6 +430,7 @@ export const RealWorldSurveillanceMap: React.FC<RealWorldSurveillanceMapProps> =
 
     const newTiles = createTileLayer(mapStyle).addTo(map);
     tileLayerRef.current = newTiles;
+    setTimeout(() => map.invalidateSize(), 100);
   }, [mapStyle]);
 
   // Render Markers, Halos, and Dynamic Transmission Lines
