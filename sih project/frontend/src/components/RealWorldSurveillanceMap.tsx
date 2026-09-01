@@ -342,10 +342,13 @@ export const RealWorldSurveillanceMap: React.FC<RealWorldSurveillanceMapProps> =
     }
   }, [theme]);
 
-  // Helper to create 100% watermark-free, high-resolution TileLayer instances
+  // Helper to create official CARTO basemap TileLayer instances
   const createTileLayer = (style: 'dark' | 'streets' | 'satellite'): L.TileLayer => {
+    const cartoKey = (import.meta.env.VITE_CARTO_API_KEY || '').trim();
+    const keyParam = cartoKey ? `?key=${cartoKey}` : '';
+
     if (style === 'satellite') {
-      // Photorealistic Earth Satellite (Esri World Imagery - 100% Free, Zero Watermarks)
+      // Photorealistic Earth Satellite
       return L.tileLayer(
         'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
         {
@@ -357,25 +360,29 @@ export const RealWorldSurveillanceMap: React.FC<RealWorldSurveillanceMapProps> =
       );
     }
     if (style === 'streets') {
-      // High-Detail Clean Roadmap (Esri World Street Map - 100% Free, Zero Watermarks)
+      // Official CARTO Voyager Roadmap
       return L.tileLayer(
-        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+        `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png${keyParam}`,
         {
-          maxZoom: 19,
-          maxNativeZoom: 18,
+          maxZoom: 20,
+          subdomains: 'abcd',
           keepBuffer: 6,
           updateWhenIdle: true,
+          attribution: '&copy; CARTO &copy; OpenStreetMap',
         }
       );
     }
-    // High-Contrast Dark Surveillance Map (Clean Matrix - 100% Free, Zero Watermarks)
-    return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      subdomains: 'abc',
-      keepBuffer: 6,
-      updateWhenIdle: true,
-      className: 'dark-surveillance-tiles',
-    });
+    // Official CARTO Dark Matter Surveillance
+    return L.tileLayer(
+      `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png${keyParam}`,
+      {
+        maxZoom: 20,
+        subdomains: 'abcd',
+        keepBuffer: 6,
+        updateWhenIdle: true,
+        attribution: '&copy; CARTO &copy; OpenStreetMap',
+      }
+    );
   };
 
   // Initialize Leaflet Map Canvas & Resize Handlers
