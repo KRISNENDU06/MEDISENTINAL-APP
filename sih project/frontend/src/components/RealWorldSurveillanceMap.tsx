@@ -342,10 +342,10 @@ export const RealWorldSurveillanceMap: React.FC<RealWorldSurveillanceMapProps> =
     }
   }, [theme]);
 
-  // Helper to create 100% reliable, zero-drop TileLayer instance across all modes
+  // Helper to create authentic CARTO basemap tiles (Fastly Global CDN - Clean, Zero Watermark, 100% Free)
   const createTileLayer = (style: 'dark' | 'streets' | 'satellite'): L.TileLayer => {
     if (style === 'satellite') {
-      // Photorealistic Earth Satellite (Esri World Imagery - 100% uptime, zero rate-limit)
+      // Photorealistic Earth Satellite (Esri World Imagery)
       return L.tileLayer(
         'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
         {
@@ -357,15 +357,18 @@ export const RealWorldSurveillanceMap: React.FC<RealWorldSurveillanceMapProps> =
       );
     }
     if (style === 'streets') {
-      // Crisp Standard Roadmap (OpenStreetMap - 100% uptime, zero rate-limit)
-      return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        subdomains: 'abc',
-        keepBuffer: 6,
-        updateWhenIdle: true,
-      });
+      // Authentic CARTO Voyager Streets (Fastly CDN - Clean, No Watermark)
+      return L.tileLayer(
+        'https://cartodb-basemaps-{s}.global.ssl.fastly.net/rastertiles/voyager/{z}/{x}/{y}.png',
+        {
+          maxZoom: 19,
+          subdomains: 'abcd',
+          keepBuffer: 6,
+          updateWhenIdle: true,
+        }
+      );
     }
-    // High-Contrast Dark Surveillance (Fastly CDN - 100% uptime, zero rate-limit)
+    // Authentic CARTO Dark Matter Surveillance (Fastly CDN - Clean, No Watermark)
     return L.tileLayer(
       'https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png',
       {
