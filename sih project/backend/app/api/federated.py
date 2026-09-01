@@ -27,18 +27,13 @@ class FederatedSignalRequest(BaseModel):
 
 
 @router.get("/nodes")
-def get_nodes(
-    _: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL, Role.VIEWER))],
-) -> dict[str, Any]:
+def get_nodes(_: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL, Role.VIEWER))]) -> dict[str, Any]:
     nodes = node_status()
     return {"nodes": nodes, "total_nodes": len(nodes), "connected_nodes": sum(n["status"] == "CONNECTED" for n in nodes), "raw_records_shared": 0, "privacy_enabled": True}
 
 
 @router.post("/process-local")
-def process_local(
-    payload: FederatedSignalRequest,
-    _: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL))],
-) -> dict[str, Any]:
+def process_local(payload: FederatedSignalRequest, _: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL))]) -> dict[str, Any]:
     try:
         return process_local_node(payload.node_id, payload.area_name, payload.observed_on, payload.signals, payload.epsilon)
     except ValueError as exc:
@@ -46,17 +41,15 @@ def process_local(
 
 
 @router.post("/simulate-round")
-def simulate_round(
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL))],
-    observed_on: date | None = None,
-) -> dict[str, Any]:
+def simulate_round(db: Annotated[Session, Depends(get_db)], current_user: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL))], observed_on: date | None = None) -> dict[str, Any]:
     assessed_on = observed_on or date.today()
     result = simulate_federated_round(assessed_on)
-    areas = {a.name.lower(): a for a in db.scalars(select(Area)).all()}
+    areas = db.scalars(select(Area)).all()
     inserted = 0
     for node in result["nodes"]:
-        area = areas.get(node["area_name"].lower())
+        area = next((a for a in areas if node["area_name"].lower() in a.name.lower() or a.name.lower() in node["area_name"].lower()), None)
+        if not area:
+            area = next((a for a in areas if node["area_name"].lower() in a.district.lower()), None)
         if not area:
             continue
         for signal in node["signals"]:
