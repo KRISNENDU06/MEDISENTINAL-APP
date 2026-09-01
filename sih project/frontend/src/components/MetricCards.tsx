@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { DashboardSummary } from '../services/api';
 import { ShieldAlert, MapPin, Database, Gauge } from 'lucide-react';
 import { FederatedNetworkPanel } from './FederatedNetworkPanel';
+import { JuryDemoPanel } from './JuryDemoPanel';
 import { federatedApi, FederatedNode } from '../services/federatedApi';
 import { useToast } from '../context/ToastContext';
 
@@ -46,6 +47,7 @@ export const MetricCards: React.FC<MetricCardsProps> = ({ summary, loading }) =>
         <div className="glass-panel rounded-2xl p-4 sm:p-5 relative overflow-hidden group hover:border-slate-700 transition-all"><div className="flex items-center justify-between"><span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Signals Processed</span><Database className="w-4 h-4 text-purple-400" /></div><div className="mt-3 flex items-baseline gap-2"><span className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">{loading || !summary ? '--' : summary.signals_processed.toLocaleString()}</span><span className="text-xs text-emerald-400 font-medium">Daily Ingestion</span></div><p className="text-[11px] text-slate-400 mt-2">Pharmacies, Clinics & Labs</p></div>
       </div>
       <div className="mt-4"><FederatedNetworkPanel nodes={nodes} loading={federatedLoading} onRefresh={loadFederatedNodes} onSimulate={runFederatedRound} simulating={simulating} lastRound={lastRound} /></div>
+      <div className="mt-4"><JuryDemoPanel /></div>
     </>
   );
 };
