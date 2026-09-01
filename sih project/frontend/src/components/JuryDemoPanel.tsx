@@ -5,6 +5,8 @@ import { ODISHA_ALL_DISTRICTS } from '../constants/odishaDistricts';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
+const JURY_CHANGE_KEY = 'medisentinel:last-jury-change';
+
 export const JuryDemoPanel: React.FC = () => {
   const { user, isAdmin, isHealthOfficial } = useAuth();
   const { showToast } = useToast();
@@ -18,7 +20,9 @@ export const JuryDemoPanel: React.FC = () => {
   const [fever, setFever] = useState('140');
   const [water, setWater] = useState('12');
   const [submitting, setSubmitting] = useState(false);
-  const [lastResult, setLastResult] = useState<any>(null);
+  const [lastResult, setLastResult] = useState<any>(() => {
+    try { return JSON.parse(localStorage.getItem(JURY_CHANGE_KEY) || 'null'); } catch { return null; }
+  });
 
   const district = ODISHA_ALL_DISTRICTS[districtKey];
   const wards = district?.subLocations || [];
@@ -37,6 +41,7 @@ export const JuryDemoPanel: React.FC = () => {
     setFever('140');
     setWater('12');
     setLastResult(null);
+    localStorage.removeItem(JURY_CHANGE_KEY);
   };
 
   const runDemo = async () => {
@@ -60,15 +65,36 @@ export const JuryDemoPanel: React.FC = () => {
         },
         true
       );
-      setLastResult(result);
+
+      const change = {
+        district: district.district,
+        districtKey,
+        ward: ward.name,
+        latitude: ward.lat,
+        longitude: ward.lng,
+        medicine: Number(medicine) || 0,
+        fever: Number(fever) || 0,
+        water: Number(water) || 0,
+        riskScore: result?.assessment?.risk_score ?? null,
+        riskLevel: result?.assessment?.risk_level ?? null,
+        timestamp: new Date().toISOString(),
+      };
+      localStorage.setItem(JURY_CHANGE_KEY, JSON.stringify(change));
+      setLastResult({ ...result, juryChange: change });
       showToast('success', 'Jury Demo Completed', `${district.district} • ${ward.name} was ingested and the risk engine was updated.`);
-      window.dispatchEvent(new CustomEvent('medisentinel:dashboard-refresh'));
+      window.dispatchEvent(new CustomEvent('medisentinel:dashboard-refresh', { detail: change }));
+
+      // Refresh every dashboard consumer so the geospatial map and full drill-down
+      // read the newly calculated backend state. The change record survives reload.
+      window.setTimeout(() => window.location.reload(), 1200);
     } catch (error: any) {
       showToast('error', 'Jury Demo Failed', error.message || 'Could not run the demonstration scenario.');
     } finally {
       setSubmitting(false);
     }
   };
+
+  const juryChange = lastResult?.juryChange || lastResult;
 
   return (
     <section className="glass-panel rounded-3xl border border-amber-500/30 overflow-hidden shadow-xl shadow-amber-950/10">
@@ -123,16 +149,21 @@ export const JuryDemoPanel: React.FC = () => {
           <button type="button" onClick={runDemo} disabled={submitting || !ward} className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-purple-600 hover:from-amber-500 hover:to-purple-500 text-white text-xs font-black shadow-lg disabled:opacity-50"><Play className="w-3.5 h-3.5" /> {submitting ? 'RUNNING LIVE PIPELINE…' : 'RUN JURY DEMO'}</button>
         </div>
 
-        {lastResult && (
+        {juryChange && (
           <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4">
             <div className="flex items-center gap-2 text-emerald-300 text-xs font-black uppercase tracking-wider"><CheckCircle2 className="w-4 h-4" /> Changes Applied Successfully</div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
-              <div><div className="text-[9px] text-slate-500 uppercase">District</div><div className="text-xs font-bold text-white mt-1">{district.district}</div></div>
-              <div><div className="text-[9px] text-slate-500 uppercase">Ward</div><div className="text-xs font-bold text-white mt-1 truncate">{ward.name}</div></div>
-              <div><div className="text-[9px] text-slate-500 uppercase">Risk Score</div><div className="text-sm font-black text-amber-300 mt-0.5">{lastResult.assessment?.risk_score ?? 'UPDATED'}/100</div></div>
+              <div><div className="text-[9px] text-slate-500 uppercase">District</div><div className="text-xs font-bold text-white mt-1">{juryChange.district}</div></div>
+              <div><div className="text-[9px] text-slate-500 uppercase">Ward</div><div className="text-xs font-bold text-white mt-1 truncate">{juryChange.ward}</div></div>
+              <div><div className="text-[9px] text-slate-500 uppercase">Risk Score</div><div className="text-sm font-black text-amber-300 mt-0.5">{juryChange.riskScore ?? 'UPDATED'}/100</div></div>
               <div><div className="text-[9px] text-slate-500 uppercase">Pipeline</div><div className="text-xs font-black text-emerald-300 mt-1 flex items-center gap-1"><Activity className="w-3 h-3" /> RISK ENGINE UPDATED</div></div>
             </div>
-            <div className="mt-3 text-[10px] text-slate-400 flex items-center gap-1.5"><MapPin className="w-3 h-3" /> The selected ward is now part of the dashboard's latest surveillance state.</div>
+            <div className="grid grid-cols-3 gap-2 mt-3">
+              <div className="rounded-xl bg-slate-950/70 border border-slate-800 p-2"><div className="text-[9px] text-slate-500">MEDICINE</div><div className="text-xs font-bold text-white">{juryChange.medicine}</div></div>
+              <div className="rounded-xl bg-slate-950/70 border border-slate-800 p-2"><div className="text-[9px] text-slate-500">FEVER</div><div className="text-xs font-bold text-white">{juryChange.fever}</div></div>
+              <div className="rounded-xl bg-slate-950/70 border border-slate-800 p-2"><div className="text-[9px] text-slate-500">WATER QUALITY</div><div className="text-xs font-bold text-white">{juryChange.water}</div></div>
+            </div>
+            <div className="mt-3 text-[10px] text-slate-400 flex items-center gap-1.5"><MapPin className="w-3 h-3" /> Geospatial surveillance and full drill-down refresh from the updated backend state after this run.</div>
           </div>
         )}
       </div>
