@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
 const JURY_CHANGE_KEY = 'medisentinel:last-jury-change';
+const JURY_AUTO_OPEN_KEY = 'medisentinel:jury-auto-open';
 
 export const JuryDemoPanel: React.FC = () => {
   const { user, isAdmin, isHealthOfficial } = useAuth();
@@ -42,6 +43,7 @@ export const JuryDemoPanel: React.FC = () => {
     setWater('12');
     setLastResult(null);
     localStorage.removeItem(JURY_CHANGE_KEY);
+    localStorage.removeItem(JURY_AUTO_OPEN_KEY);
   };
 
   const runDemo = async () => {
@@ -80,12 +82,14 @@ export const JuryDemoPanel: React.FC = () => {
         timestamp: new Date().toISOString(),
       };
       localStorage.setItem(JURY_CHANGE_KEY, JSON.stringify(change));
+      // One-shot navigation request: the map consumes this token after the
+      // reload, so the same drill-down can never reopen on later visits.
+      localStorage.setItem(JURY_AUTO_OPEN_KEY, JSON.stringify(change));
       setLastResult({ ...result, juryChange: change });
       showToast('success', 'Jury Demo Completed', `${district.district} • ${ward.name} was ingested and the risk engine was updated.`);
       window.dispatchEvent(new CustomEvent('medisentinel:dashboard-refresh', { detail: change }));
 
-      // Refresh every dashboard consumer so the geospatial map and full drill-down
-      // read the newly calculated backend state. The change record survives reload.
+      // Refresh the dashboard so the new backend state is visible everywhere.
       window.setTimeout(() => window.location.reload(), 1200);
     } catch (error: any) {
       showToast('error', 'Jury Demo Failed', error.message || 'Could not run the demonstration scenario.');
