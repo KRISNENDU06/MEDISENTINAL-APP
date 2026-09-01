@@ -73,9 +73,19 @@ if settings.enforce_https:
     app.add_middleware(HTTPSRedirectMiddleware)
 
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.api_route("/", methods=["GET", "HEAD"])
+def root() -> dict[str, str]:
+    return {
+        "status": "MEDISENTINEL Early Warning Platform Active",
+        "tagline": "YOUR HEALTH, OUR WATCH",
+        "docs": "/docs",
+        "health": "/health",
+    }
 
 
 app.include_router(auth.router, prefix="/api")
