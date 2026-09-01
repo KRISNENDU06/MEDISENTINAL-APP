@@ -55,7 +55,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.backend_cors_origins,
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -67,7 +67,9 @@ app.add_middleware(
     requests_per_window=settings.rate_limit_requests,
     window_seconds=settings.rate_limit_window_seconds,
 )
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts)
+
+if settings.allowed_hosts_list != ["*"]:
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts_list)
 
 if settings.enforce_https:
     app.add_middleware(HTTPSRedirectMiddleware)
