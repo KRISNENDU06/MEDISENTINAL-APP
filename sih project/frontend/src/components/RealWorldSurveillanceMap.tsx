@@ -342,16 +342,16 @@ export const RealWorldSurveillanceMap: React.FC<RealWorldSurveillanceMapProps> =
     }
   }, [theme]);
 
-  // Tile layer URLs
+  // Tile layer URLs (100% Free, High Resolution, Zero API Key required)
   const getTileUrl = (style: 'dark' | 'streets' | 'satellite') => {
     switch (style) {
       case 'satellite':
         return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
       case 'streets':
-        return 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+        return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
       case 'dark':
       default:
-        return 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+        return 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}';
     }
   };
 
@@ -369,7 +369,7 @@ export const RealWorldSurveillanceMap: React.FC<RealWorldSurveillanceMapProps> =
 
       const tiles = L.tileLayer(getTileUrl(mapStyle), {
         maxZoom: 18,
-        subdomains: 'abcd',
+        subdomains: 'abc',
       }).addTo(map);
 
       tileLayerRef.current = tiles;
