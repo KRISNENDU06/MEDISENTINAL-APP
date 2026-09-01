@@ -34,9 +34,9 @@
   }
 }
 
-/* Google Maps Dark / Night Mode Tiles */
-.google-map-dark-tiles {
-  filter: invert(92%) hue-rotate(180deg) brightness(85%) contrast(115%) !important;
+/* Clean Dark Surveillance Tiles (100% Free of any Watermarks) */
+.dark-surveillance-tiles {
+  filter: brightness(0.65) invert(1) contrast(3) hue-rotate(200deg) saturate(0.35) !important;
 }
 
 /* Custom scrollbars */
