@@ -342,17 +342,25 @@ export const RealWorldSurveillanceMap: React.FC<RealWorldSurveillanceMapProps> =
     }
   }, [theme]);
 
-  // Tile layer URLs (100% Free, High Resolution, Zero API Key required)
-  const getTileUrl = (style: 'dark' | 'streets' | 'satellite') => {
-    switch (style) {
-      case 'satellite':
-        return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-      case 'streets':
-        return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-      case 'dark':
-      default:
-        return 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}';
+  // Helper to create appropriate TileLayer instance
+  const createTileLayer = (style: 'dark' | 'streets' | 'satellite'): L.TileLayer => {
+    if (style === 'satellite') {
+      return L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        { maxZoom: 18, maxNativeZoom: 18 }
+      );
     }
+    if (style === 'streets') {
+      return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        subdomains: 'abc',
+      });
+    }
+    // Dark Mode (Fastly CDN mirror - 100% Free, keyless, zero watermarks)
+    return L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      subdomains: 'abcd',
+    });
   };
 
   // Initialize Leaflet Map Canvas
@@ -367,10 +375,7 @@ export const RealWorldSurveillanceMap: React.FC<RealWorldSurveillanceMapProps> =
         attributionControl: false,
       });
 
-      const tiles = L.tileLayer(getTileUrl(mapStyle), {
-        maxZoom: 18,
-        subdomains: 'abc',
-      }).addTo(map);
+      const tiles = createTileLayer(mapStyle).addTo(map);
 
       tileLayerRef.current = tiles;
       markersGroupRef.current = L.layerGroup().addTo(map);
@@ -385,10 +390,18 @@ export const RealWorldSurveillanceMap: React.FC<RealWorldSurveillanceMapProps> =
     };
   }, []);
 
-  // Update Tile Layer on Style Change
+  // Update Tile Layer cleanly on Style Change (Dark, Streets, Satellite)
   useEffect(() => {
-    if (!mapInstanceRef.current || !tileLayerRef.current) return;
-    tileLayerRef.current.setUrl(getTileUrl(mapStyle));
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (tileLayerRef.current) {
+      map.removeLayer(tileLayerRef.current);
+      tileLayerRef.current = null;
+    }
+
+    const newTiles = createTileLayer(mapStyle).addTo(map);
+    tileLayerRef.current = newTiles;
   }, [mapStyle]);
 
   // Render Markers, Halos, and Dynamic Transmission Lines
