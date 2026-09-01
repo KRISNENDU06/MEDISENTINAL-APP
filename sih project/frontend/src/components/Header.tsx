@@ -55,11 +55,15 @@ export const Header: React.FC<HeaderProps> = ({
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
 
   const handleExitApp = async () => {
-    if (window.confirm('Are you sure you want to exit the application and close your session?')) {
+    if (
+      window.confirm(
+        '⚠️ SHUTDOWN CONFIRMATION:\n\nAre you sure you want to stop all MEDISENTINEL background servers and terminate the application command prompt processes?'
+      )
+    ) {
       await shutdownApp();
-      try {
+      setTimeout(() => {
         window.close();
-      } catch {}
+      }, 1200);
     }
   };
 
@@ -294,10 +298,10 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </div>
 
-          {/* Clean Exit App & Close Session */}
+          {/* Clean Exit App & Shutdown Terminal Processes */}
           <button
             onClick={handleExitApp}
-            title="Exit application and close session"
+            title="Safely exit application & terminate background servers"
             className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/40 text-rose-300 hover:text-white text-xs font-semibold shadow-md transition-all active:scale-95"
           >
             <Power className="w-3.5 h-3.5 text-rose-400" />
