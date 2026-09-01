@@ -8,7 +8,10 @@ import { useToast } from '../context/ToastContext';
 export const JuryDemoPanel: React.FC = () => {
   const { user, isAdmin, isHealthOfficial } = useAuth();
   const { showToast } = useToast();
-  const districtEntries = useMemo(() => Object.entries(ODISHA_ALL_DISTRICTS), []);
+  const districtEntries = useMemo(
+    () => Object.entries(ODISHA_ALL_DISTRICTS).filter(([key, item]) => !(key === 'Bhubaneswar' && item.district === 'Khurda')),
+    []
+  );
   const [districtKey, setDistrictKey] = useState(districtEntries[0]?.[0] || '');
   const [wardIndex, setWardIndex] = useState(0);
   const [medicine, setMedicine] = useState('180');
@@ -77,7 +80,7 @@ export const JuryDemoPanel: React.FC = () => {
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-sm sm:text-base font-black text-white uppercase tracking-wider">Jury Demonstration Panel</h3>
                 <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">LIVE DEMO</span>
-                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">{districtEntries.length} DISTRICTS</span>
+                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">30 DISTRICTS</span>
               </div>
               <p className="text-[11px] text-slate-400 mt-1">Choose any district and ward, change the surveillance signals, and demonstrate the real ingestion → risk → alert pipeline.</p>
             </div>
@@ -89,7 +92,7 @@ export const JuryDemoPanel: React.FC = () => {
       <div className="p-4 sm:p-5 space-y-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <label className="block">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">District ({districtEntries.length} available)</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">District (30 available)</span>
             <select value={districtKey} onChange={(e) => selectDistrict(e.target.value)} className="mt-1 w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2.5 text-xs text-white outline-none focus:border-amber-500">
               {districtEntries.map(([key, item]) => <option key={key} value={key}>{item.district}{key !== item.district ? ` — ${key}` : ''}</option>)}
             </select>
