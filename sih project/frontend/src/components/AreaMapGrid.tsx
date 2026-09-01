@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { AreaSummary } from '../services/api';
 import { RealWorldSurveillanceMap } from './RealWorldSurveillanceMap';
 import {
@@ -35,6 +35,9 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
   const [viewMode, setViewMode] = useState<'map' | 'grid'>('map');
   const [selectedDistrict, setSelectedDistrict] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  // Prevent the same persisted jury scenario from reopening the drill-down
+  // every time App.tsx re-renders. A new scenario gets a new raw value.
+  const lastAutoOpenedJuryChange = useRef<string | null>(null);
 
   const distinctDistricts = useMemo(() => {
     const set = new Set<string>();
@@ -57,22 +60,27 @@ export const AreaMapGrid: React.FC<AreaMapGridProps> = ({
     });
   }, [areas, selectedDistrict, searchQuery]);
 
-  // After a Jury Demo, focus the exact ward that was changed and open the
-  // existing full drill-down automatically. This makes the jury flow visibly
-  // trace: scenario change -> geospatial node -> complete analysis.
+  // After a NEW Jury Demo, focus the exact ward and open the existing
+  // drill-down once. Closing the modal must not cause it to reopen.
   useEffect(() => {
     if (loading || !areas.length) return;
     try {
       const raw = localStorage.getItem(JURY_CHANGE_KEY);
-      if (!raw) return;
+      if (!raw || raw === lastAutoOpenedJuryChange.current) return;
+
       const change = JSON.parse(raw);
       if (!change?.ward || !change?.district) return;
+
       const match = areas.find(
         (a) =>
           a.name.toLowerCase() === String(change.ward).toLowerCase() &&
           a.district.toLowerCase() === String(change.district).toLowerCase()
       );
+
       if (match) {
+        // Mark this exact scenario before opening. App re-renders will not
+        // reopen it because the persisted value is already acknowledged.
+        lastAutoOpenedJuryChange.current = raw;
         setSelectedDistrict(match.district);
         onSelectArea(match);
       }
