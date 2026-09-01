@@ -55,7 +55,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
+    allow_origins=settings.backend_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -67,17 +67,25 @@ app.add_middleware(
     requests_per_window=settings.rate_limit_requests,
     window_seconds=settings.rate_limit_window_seconds,
 )
-
-if settings.allowed_hosts_list != ["*"]:
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts_list)
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts)
 
 if settings.enforce_https:
     app.add_middleware(HTTPSRedirectMiddleware)
 
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.api_route("/", methods=["GET", "HEAD"])
+def root() -> dict[str, str]:
+    return {
+        "status": "MEDISENTINEL Early Warning Platform Active",
+        "tagline": "YOUR HEALTH, OUR WATCH",
+        "docs": "/docs",
+        "health": "/health",
+    }
 
 
 app.include_router(auth.router, prefix="/api")
