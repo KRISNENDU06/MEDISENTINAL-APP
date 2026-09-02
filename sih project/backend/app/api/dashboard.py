@@ -66,7 +66,7 @@ def area_risk(
 class CivicFeedbackCreate(BaseModel):
     area_id: int = Field(gt=0)
     alert_id: int = Field(gt=0)
-    response: Literal["FOLLOWING", "NOT_FOLLOWING", "NOT_APPLICABLE"]
+    response: Literal["EXCELLENT", "GOOD", "MIXED", "POOR", "NOT_APPLICABLE"]
 
 
 class CivicSignalCreate(BaseModel):
@@ -77,8 +77,47 @@ class CivicSignalCreate(BaseModel):
     quality: float = Field(default=0.9, ge=0, le=1)
 
 
+CIVIC_WEIGHTS = {
+    "citizen_pulse": 0.30,
+    "behavior_adherence": 0.25,
+    "health_action": 0.25,
+    "advisory_impact": 0.20,
+}
+
+CIVIC_SOURCE_GROUPS = {
+    "citizen_pulse": {"anonymous_citizen_feedback", "Anonymous Public Feedback"},
+    "behavior_adherence": {"Municipal Field Survey", "community_behavior_observation", "Community Behavior Survey"},
+    "health_action": {"Community Health Action Aggregate", "health_action_index", "Health Action Aggregate"},
+    "advisory_impact": {"Traffic/IoT Aggregated Signal", "traffic_iot_aggregate", "Advisory Impact Aggregate"},
+}
+
+CIVIC_RESPONSE_SCORES = {
+    "EXCELLENT": 100.0,
+    "GOOD": 75.0,
+    "MIXED": 50.0,
+    "POOR": 25.0,
+    "NOT_APPLICABLE": 50.0,
+}
+
+
 def _civic_category(alert_id: int) -> str:
     return f"civic:{alert_id}"
+
+
+def _source_group(source: str) -> str | None:
+    for group, sources in CIVIC_SOURCE_GROUPS.items():
+        if source in sources:
+            return group
+    return None
+
+
+def _weighted_average(rows: list[Observation]) -> float | None:
+    if not rows:
+        return None
+    denominator = sum(row.data_quality_score for row in rows)
+    if denominator <= 0:
+        return None
+    return round(sum(row.value * row.data_quality_score for row in rows) / denominator, 1)
 
 
 def _civic_score(db: Session, area_id: int, alert_id: int) -> dict:
@@ -92,16 +131,38 @@ def _civic_score(db: Session, area_id: int, alert_id: int) -> dict:
 
     valid_rows = [row for row in rows if row.data_quality_score > 0]
     if not valid_rows:
-        return {"score": None, "confidence": 0, "trend": "NO_DATA", "sample_count": 0, "updated_at": None, "status": "INSUFFICIENT_DATA"}
+        return {
+            "score": None,
+            "confidence": 0,
+            "trend": "NO_DATA",
+            "sample_count": 0,
+            "updated_at": None,
+            "status": "INSUFFICIENT_DATA",
+            "indicators": {},
+        }
 
-    numerator = sum(row.value * row.data_quality_score for row in valid_rows)
-    denominator = sum(row.data_quality_score for row in valid_rows)
-    score = round(numerator / denominator, 1) if denominator else None
+    indicator_scores: dict[str, float] = {}
+    indicator_counts: dict[str, int] = {}
+    for group in CIVIC_WEIGHTS:
+        group_rows = [row for row in valid_rows if _source_group(row.source or "") == group]
+        value = _weighted_average(group_rows)
+        if value is not None:
+            indicator_scores[group] = value
+            indicator_counts[group] = len(group_rows)
+
+    # Renormalize only across indicators with available evidence. Missing data
+    # is unknown, never interpreted as poor civic behavior.
+    available_weight = sum(CIVIC_WEIGHTS[group] for group in indicator_scores)
+    if available_weight > 0:
+        score = round(sum(indicator_scores[group] * CIVIC_WEIGHTS[group] for group in indicator_scores) / available_weight, 1)
+    else:
+        score = _weighted_average(valid_rows)
 
     sample_count = len(valid_rows)
     quality = sum(row.data_quality_score for row in valid_rows) / sample_count
-    volume_confidence = min(sample_count / 20, 1.0)
-    confidence = round(100 * (0.55 * volume_confidence + 0.45 * quality), 1)
+    source_diversity = min(len(indicator_scores) / len(CIVIC_WEIGHTS), 1.0)
+    volume_confidence = min(sample_count / 40, 1.0)
+    confidence = round(100 * (0.40 * volume_confidence + 0.30 * quality + 0.30 * source_diversity), 1)
 
     midpoint = datetime.utcnow() - timedelta(hours=1)
     recent = [row.value for row in valid_rows if row.created_at >= midpoint]
@@ -114,6 +175,13 @@ def _civic_score(db: Session, area_id: int, alert_id: int) -> dict:
         elif delta <= -5:
             trend = "DECLINING"
 
+    indicators = {
+        "citizen_pulse": {"score": indicator_scores.get("citizen_pulse"), "weight": CIVIC_WEIGHTS["citizen_pulse"], "samples": indicator_counts.get("citizen_pulse", 0)},
+        "behavior_adherence": {"score": indicator_scores.get("behavior_adherence"), "weight": CIVIC_WEIGHTS["behavior_adherence"], "samples": indicator_counts.get("behavior_adherence", 0)},
+        "health_action": {"score": indicator_scores.get("health_action"), "weight": CIVIC_WEIGHTS["health_action"], "samples": indicator_counts.get("health_action", 0)},
+        "advisory_impact": {"score": indicator_scores.get("advisory_impact"), "weight": CIVIC_WEIGHTS["advisory_impact"], "samples": indicator_counts.get("advisory_impact", 0)},
+    }
+
     return {
         "score": score,
         "confidence": confidence,
@@ -121,6 +189,7 @@ def _civic_score(db: Session, area_id: int, alert_id: int) -> dict:
         "sample_count": sample_count,
         "updated_at": max(row.created_at for row in valid_rows),
         "status": "HIGH" if score is not None and score >= 80 else "MODERATE" if score is not None and score >= 50 else "LOW",
+        "indicators": indicators,
     }
 
 
@@ -132,8 +201,9 @@ def submit_civic_feedback(payload: CivicFeedbackCreate, db: Session = Depends(ge
     if not alert or not area or alert.area_id != payload.area_id:
         raise HTTPException(status_code=404, detail="Alert or area not found")
 
-    # Non-applicable responses are retained for auditability but have zero scoring weight.
-    value = {"FOLLOWING": 100.0, "NOT_FOLLOWING": 0.0, "NOT_APPLICABLE": 50.0}[payload.response]
+    # A four-level emoji-style pulse is mapped to a bounded score. Non-applicable
+    # responses are retained but have zero scoring weight.
+    value = CIVIC_RESPONSE_SCORES[payload.response]
     quality = 0.8 if payload.response != "NOT_APPLICABLE" else 0.0
     observation = Observation(
         area_id=payload.area_id,
@@ -193,7 +263,7 @@ def civic_overview(
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL, Role.VIEWER))],
 ):
-    """Return current civic ratings for active alerts that have available signals."""
+    """Return current civic ratings for active alerts with area-level evidence."""
     active_alerts = db.scalars(select(Alert).where(Alert.status != AlertStatus.RESOLVED).order_by(Alert.created_at.desc())).all()
     result = []
     for alert in active_alerts:
