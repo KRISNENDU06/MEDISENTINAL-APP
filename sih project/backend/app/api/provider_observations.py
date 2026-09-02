@@ -2,7 +2,6 @@ from datetime import date
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.api.deps import require_roles
 from app.api.dashboard import invalidate_dashboard_cache
@@ -27,9 +26,6 @@ def create_provider_observation(payload:ProviderObservationCreate,db:Annotated[S
     area=db.get(Area,payload.area_id)
     if not area: raise HTTPException(404,"Area not found")
     provider=current_user.provider_type or "GOVERNMENT_HEALTH_OFFICIAL"; source=f"{provider}:{current_user.id}"; category=f"disease:{payload.disease.strip().lower()}"
-    # One official submission per reporting area per calendar day.
-    duplicate=db.scalar(select(Observation.id).where(Observation.area_id==area.id,Observation.observed_on==payload.observed_on).limit(1))
-    if duplicate: raise HTTPException(409,f"Today's health information for {area.name} has already been uploaded. Only one upload is allowed per area per day.")
     medicine=level_value(payload.medicine_demand_level); vector=level_value(payload.vector_activity_level); environment=level_value(payload.environmental_contamination_level)
     signals=[("reported_cases",payload.suspected_cases),("confirmed_cases",payload.confirmed_cases),("lab_positivity",payload.lab_positivity_rate),("fever_cases",payload.fever_presentations),("respiratory_symptoms",payload.respiratory_symptoms),("gi_symptoms",payload.gi_symptoms),("clinic_visits",payload.opd_visits),("hospital_admissions",payload.hospital_admissions),("emergency_visits",payload.emergency_visits),("medicine_demand",medicine),("vector_risk",vector),("water_quality",environment)]
     legacy=[("medicine_demand",payload.medicine_demand),("medicine_sales",payload.medicine_sales),("pharmacy_demand",payload.pharmacy_demand),("fever_cases",payload.fever_cases),("clinic_visits",payload.clinic_visits),("reported_cases",payload.reported_cases),("suspected_vector_cases",payload.suspected_vector_cases),("water_quality",payload.water_contamination)]
@@ -40,4 +36,4 @@ def create_provider_observation(payload:ProviderObservationCreate,db:Annotated[S
     if payload.additional_observations.strip() or payload.action_or_verification_needed.strip(): db.add(Observation(area_id=area.id,observed_on=payload.observed_on,signal_type="official_notes",category=category,value=0,source=source,data_quality_score=payload.data_quality_score))
     db.flush(); assessments,generated_alerts=RiskEngine(db).run_for_all_areas(payload.observed_on); assessment=next((x for x in assessments if x.area_id==area.id),None)
     log_activity(db,action="PROVIDER_OBSERVATION_CREATED",details=f"{provider} uploaded official surveillance information for {payload.disease} in {area.name}",user=current_user); db.commit(); invalidate_dashboard_cache()
-    return {"success":True,"message":f"Official information recorded for {area.name}. Risk engine recalculated.","provider_type":provider,"disease":payload.disease,"area_id":area.id,"area_name":area.name,"one_upload_per_day":True,"assessment":{"risk_score":assessment.risk_score if assessment else None,"risk_level":assessment.risk_level.value if assessment else None,"medicine_score":assessment.medicine_score if assessment else None,"health_score":assessment.health_score if assessment else None,"persistence_score":assessment.persistence_score if assessment else None,"geographic_score":assessment.geographic_score if assessment else None,"confidence":assessment.confidence if assessment else None},"generated_alerts":generated_alerts}
+    return {"success":True,"message":f"Official information recorded for {area.name}. Risk engine recalculated.","provider_type":provider,"disease":payload.disease,"area_id":area.id,"area_name":area.name,"one_upload_per_day":False,"assessment":{"risk_score":assessment.risk_score if assessment else None,"risk_level":assessment.risk_level.value if assessment else None,"medicine_score":assessment.medicine_score if assessment else None,"health_score":assessment.health_score if assessment else None,"persistence_score":assessment.persistence_score if assessment else None,"geographic_score":assessment.geographic_score if assessment else None,"confidence":assessment.confidence if assessment else None},"generated_alerts":generated_alerts}
