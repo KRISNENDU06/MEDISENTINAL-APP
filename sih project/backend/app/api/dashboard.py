@@ -41,9 +41,7 @@ def dashboard_summary(
         overall_risk_score=overall_score,
         overall_risk_level=_classify_overall(overall_score),
         average_confidence=round(sum(confidences) / len(confidences), 2) if confidences else 0,
-        active_alerts=int(
-            db.scalar(select(func.count(Alert.id)).where(Alert.status != AlertStatus.RESOLVED)) or 0
-        ),
+        active_alerts=int(db.scalar(select(func.count(Alert.id)).where(Alert.status != AlertStatus.RESOLVED)) or 0),
         areas_monitored=int(db.scalar(select(func.count(Area.id))) or 0),
         signals_processed=int(db.scalar(select(func.count(Observation.id))) or 0),
         high_risk_areas=sum(1 for assessment in latest_by_area if assessment.risk_level == RiskLevel.HIGH),
@@ -85,43 +83,29 @@ def _civic_category(alert_id: int) -> str:
 
 def _civic_score(db: Session, area_id: int, alert_id: int) -> dict:
     cutoff = datetime.utcnow() - timedelta(hours=2)
-    rows = list(
-        db.scalars(
-            select(Observation)
-            .where(
-                Observation.area_id == area_id,
-                Observation.signal_type == "civic_compliance",
-                Observation.category == _civic_category(alert_id),
-                Observation.created_at >= cutoff,
-            )
-            .order_by(Observation.created_at.desc())
-        ).all()
-    )
+    rows = list(db.scalars(select(Observation).where(
+        Observation.area_id == area_id,
+        Observation.signal_type == "civic_compliance",
+        Observation.category == _civic_category(alert_id),
+        Observation.created_at >= cutoff,
+    ).order_by(Observation.created_at.desc())).all())
 
-    if not rows:
-        return {
-            "score": None,
-            "confidence": 0,
-            "trend": "NO_DATA",
-            "sample_count": 0,
-            "updated_at": None,
-            "status": "INSUFFICIENT_DATA",
-        }
+    valid_rows = [row for row in rows if row.data_quality_score > 0]
+    if not valid_rows:
+        return {"score": None, "confidence": 0, "trend": "NO_DATA", "sample_count": 0, "updated_at": None, "status": "INSUFFICIENT_DATA"}
 
-    # Weighted average: source quality controls influence; no response is treated as missing,
-    # never as non-compliance. Citizen feedback is intentionally only one evidence source.
-    numerator = sum(r.value * max(r.data_quality_score, 0.1) for r in rows)
-    denominator = sum(max(r.data_quality_score, 0.1) for r in rows)
+    numerator = sum(row.value * row.data_quality_score for row in valid_rows)
+    denominator = sum(row.data_quality_score for row in valid_rows)
     score = round(numerator / denominator, 1) if denominator else None
 
-    sample_count = len(rows)
-    quality = sum(r.data_quality_score for r in rows) / sample_count
+    sample_count = len(valid_rows)
+    quality = sum(row.data_quality_score for row in valid_rows) / sample_count
     volume_confidence = min(sample_count / 20, 1.0)
     confidence = round(100 * (0.55 * volume_confidence + 0.45 * quality), 1)
 
     midpoint = datetime.utcnow() - timedelta(hours=1)
-    recent = [r.value for r in rows if r.created_at >= midpoint]
-    older = [r.value for r in rows if r.created_at < midpoint]
+    recent = [row.value for row in valid_rows if row.created_at >= midpoint]
+    older = [row.value for row in valid_rows if row.created_at < midpoint]
     trend = "STABLE"
     if recent and older:
         delta = sum(recent) / len(recent) - sum(older) / len(older)
@@ -135,25 +119,21 @@ def _civic_score(db: Session, area_id: int, alert_id: int) -> dict:
         "confidence": confidence,
         "trend": trend,
         "sample_count": sample_count,
-        "updated_at": max(r.created_at for r in rows),
+        "updated_at": max(row.created_at for row in valid_rows),
         "status": "HIGH" if score is not None and score >= 80 else "MODERATE" if score is not None and score >= 50 else "LOW",
     }
 
 
 @router.post("/civic/feedback", status_code=201)
 def submit_civic_feedback(payload: CivicFeedbackCreate, db: Session = Depends(get_db)):
-    """Anonymous public feedback. No user identity is stored.
-
-    Non-users can participate through any future public web/QR/SMS client using this endpoint.
-    Missing participation is deliberately not interpreted as non-compliance.
-    """
+    """Record anonymous public feedback; identity is intentionally not stored."""
     alert = db.get(Alert, payload.alert_id)
     area = db.get(Area, payload.area_id)
     if not alert or not area or alert.area_id != payload.area_id:
         raise HTTPException(status_code=404, detail="Alert or area not found")
 
+    # Non-applicable responses are retained for auditability but have zero scoring weight.
     value = {"FOLLOWING": 100.0, "NOT_FOLLOWING": 0.0, "NOT_APPLICABLE": 50.0}[payload.response]
-    # NOT_APPLICABLE is stored with zero quality so it contributes no compliance evidence.
     quality = 0.8 if payload.response != "NOT_APPLICABLE" else 0.0
     observation = Observation(
         area_id=payload.area_id,
@@ -213,18 +193,10 @@ def civic_overview(
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL, Role.VIEWER))],
 ):
-    """Return the latest civic rating for each area/active alert pair with data.
-
-    This is intentionally based only on available signals; non-participation is not counted as a no.
-    """
+    """Return current civic ratings for active alerts that have available signals."""
     active_alerts = db.scalars(select(Alert).where(Alert.status != AlertStatus.RESOLVED).order_by(Alert.created_at.desc())).all()
-    seen: set[tuple[int, int]] = set()
     result = []
     for alert in active_alerts:
-        key = (alert.area_id, alert.id)
-        if key in seen:
-            continue
-        seen.add(key)
         area = db.get(Area, alert.area_id)
         if not area:
             continue
@@ -234,22 +206,14 @@ def civic_overview(
 
 
 def _latest_assessments(db: Session) -> list[RiskAssessment]:
-    subq = (
-        select(
-            RiskAssessment.id,
-            func.row_number()
-            .over(partition_by=RiskAssessment.area_id, order_by=[RiskAssessment.assessed_on.desc(), RiskAssessment.id.desc()])
-            .label("rn"),
-        )
-        .subquery()
-    )
-    return list(
-        db.scalars(
-            select(RiskAssessment)
-            .join(subq, RiskAssessment.id == subq.c.id)
-            .where(subq.c.rn == 1)
-        ).all()
-    )
+    subq = select(
+        RiskAssessment.id,
+        func.row_number().over(
+            partition_by=RiskAssessment.area_id,
+            order_by=[RiskAssessment.assessed_on.desc(), RiskAssessment.id.desc()],
+        ).label("rn"),
+    ).subquery()
+    return list(db.scalars(select(RiskAssessment).join(subq, RiskAssessment.id == subq.c.id).where(subq.c.rn == 1)).all())
 
 
 def _classify_overall(score: float) -> RiskLevel:
