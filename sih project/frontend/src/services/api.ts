@@ -24,7 +24,8 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 export interface FederatedNode { node_id:string; name:string; type:string; location:string; status:'CONNECTED'|'DELAYED'|'OFFLINE'|string; last_sync:string; signals_sent:number; raw_records_shared:number; privacy:string; }
 export interface FederatedNetworkResponse { nodes:FederatedNode[]; total_nodes:number; connected_nodes:number; raw_records_shared:number; privacy_enabled:boolean; }
 export interface TokenResponse { access_token:string; refresh_token?:string; token_type?:string; }
-export interface User { id:number; email:string; full_name:string; role:'ADMIN'|'HEALTH_OFFICIAL'|'VIEWER'; is_active:boolean; }
+export type ProviderType = 'PRIVATE_CLINIC'|'GOVERNMENT_CLINIC'|'HOSPITAL'|'DOCTOR'|'MUNICIPAL_HEALTH_AUTHORITY'|'GOVERNMENT_HEALTH_OFFICIAL'|'PUBLIC_CITIZEN'|string;
+export interface User { id:number; email:string; full_name:string; role:'ADMIN'|'HEALTH_OFFICIAL'|'VIEWER'; provider_type:ProviderType; is_active:boolean; }
 export interface DashboardSummary { overall_risk_score:number; overall_risk_level:'LOW'|'MEDIUM'|'HIGH'; average_confidence:number; active_alerts:number; areas_monitored:number; signals_processed:number; high_risk_areas:number; medium_risk_areas:number; low_risk_areas:number; last_updated:string|null; }
 export interface SignalData { current:number; baseline:number; deviation:string; }
 export interface AreaSignals { medicineDemand:SignalData; feverIndicators:SignalData; clinicVisits:SignalData; geographicSpread:{affectedNeighbors:number; totalNeighbors:number; deviation:string}; }
@@ -36,6 +37,7 @@ export interface AlertItem { id:number|string; areaId:string; areaName:string; s
 export interface WhatIfRequest { medicineDemandSpike:number; feverCasesSpike:number; clinicVisitsSpike:number; geographicSpread:number; persistenceWeeks:number; archetype:string; intervention:string; r0?:number; }
 export interface WhatIfResult { riskScore:number; riskLevel:'LOW'|'MEDIUM'|'HIGH'; confidence:number; effectiveRt:number; archetype:any; intervention:any; factorScores:FactorScores; signals:AreaSignals; explanation:string; recommendedAction:string; timeline:TimelinePoint[]; }
 export interface ObservationInput { area_name?:string; district?:string; observed_on:string; signal_type:string; category?:string; value:number; source?:string; data_quality_score?:number; latitude?:number; longitude?:number; state?:string; area_id?:number; custom_area_name?:string; custom_district?:string; }
+export interface ProviderObservationInput { area_id:number; observed_on:string; disease:string; medicine_demand:number; fever_cases:number; clinic_visits:number; data_quality_score?:number; }
 export interface CivicIndicator { score:number|null; weight:number; samples:number; }
 export interface CivicRating { area_id:number; area_name:string; district?:string; alert_id:number; alert_title:string; score:number|null; confidence:number; trend:'IMPROVING'|'DECLINING'|'STABLE'|'NO_DATA'; sample_count:number; updated_at:string|null; status:'HIGH'|'MODERATE'|'LOW'|'INSUFFICIENT_DATA'; indicators?:{ citizen_pulse:CivicIndicator; behavior_adherence:CivicIndicator; health_action:CivicIndicator; advisory_impact:CivicIndicator; }; }
 
@@ -53,8 +55,9 @@ export const api = {
   deleteAreaObservations:(id:number)=>request<any>(`/api/observations/area/${id}`,{method:'DELETE'}),
   reseedDatabase:()=>request<any>('/api/admin/reseed',{method:'POST'}),
   createObservation:(payload:ObservationInput,autoRunRisk=true)=>request<any>(`/api/observations?auto_run_risk=${autoRunRisk}`,{method:'POST',body:JSON.stringify(payload)}),
+  createProviderObservation:(payload:ProviderObservationInput)=>request<any>('/api/provider-observations',{method:'POST',body:JSON.stringify(payload)}),
   createMultiSignalObservation:(payload:any,autoRunRisk=true)=>request<any>(`/api/observations/multi?auto_run_risk=${autoRunRisk}`,{method:'POST',body:JSON.stringify(payload)}),
-  getObservations:(areaId?:number,signalType?:string,limit:number=100)=>{const p=new URLSearchParams();if(areaId)p.append('area_id',String(areaId));if(signalType)p.append('signal_type',signalType);p.append('limit',String(limit));return request<any[]>(`/api/observations?${p}`)},
+  getObservations:(areaId?:number,signalType?:string,limit:number=100)=>{const p=new URLSearchParams();if(areaId)p.append('area_id',String(areaId));if(signalType)p.append('signal_type',String(signalType));p.append('limit',String(limit));return request<any[]>(`/api/observations?${p}`)},
   runWhatIf:(payload:WhatIfRequest)=>request<WhatIfResult>('/api/simulation/what-if',{method:'POST',body:JSON.stringify(payload)}),
   queryCopilot:(query:string,selectedAreaId?:string)=>request<any>('/api/copilot/query',{method:'POST',body:JSON.stringify({query,selectedAreaId})}),
   dispatchRRT:(wardId:string,wardName:string,notes?:string)=>request<any>('/api/response/dispatch-rrt',{method:'POST',body:JSON.stringify({wardId,wardName,notes})}),
