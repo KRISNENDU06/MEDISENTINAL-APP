@@ -34,6 +34,7 @@ class User(Base):
     full_name: Mapped[str] = mapped_column(String(255))
     hashed_password: Mapped[str] = mapped_column(String(255))
     role: Mapped[Role] = mapped_column(SqlEnum(Role), default=Role.VIEWER)
+    provider_type: Mapped[str] = mapped_column(String(60), default="PUBLIC_CITIZEN")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
@@ -146,10 +147,10 @@ class HealthReport(Base):
     officer_name: Mapped[str] = mapped_column(String(255))
     officer_designation: Mapped[str] = mapped_column(String(255), default="District Health Officer")
     report_title: Mapped[str] = mapped_column(String(255))
-    observed_signals: Mapped[str] = mapped_column(Text)  # JSON-encoded signals string or descriptions
+    observed_signals: Mapped[str] = mapped_column(Text)
     risk_level: Mapped[RiskLevel] = mapped_column(SqlEnum(RiskLevel), default=RiskLevel.MEDIUM, index=True)
     clinical_notes: Mapped[str] = mapped_column(Text, default="")
-    recommendations: Mapped[str] = mapped_column(Text)  # JSON-encoded or newline-separated directives
+    recommendations: Mapped[str] = mapped_column(Text)
     reported_date: Mapped[date] = mapped_column(Date, default=date.today, index=True)
     is_public: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
