@@ -8,7 +8,7 @@ from app.models.domain import Alert, AlertStatus, Observation
 
 
 # Jury-demo seed: creates realistic, clearly synthetic civic-compliance signals
-# only when the database does not already contain civic-compliance observations.
+# for active alerts that do not already have recent civic-compliance observations.
 # It never represents these values as a census of citizens.
 DEMO_SCORES = [86, 78, 91, 67, 83, 72]
 DEMO_SOURCES = [
@@ -19,15 +19,7 @@ DEMO_SOURCES = [
 
 
 def seed_civic_demo_data(db: Session) -> None:
-    """Seed current civic-compliance demo signals for active alerts, once."""
-    existing = db.scalar(
-        select(Observation.id)
-        .where(Observation.signal_type == "civic_compliance")
-        .limit(1)
-    )
-    if existing is not None:
-        return
-
+    """Ensure current civic-compliance demo signals exist for active alerts."""
     alerts = db.scalars(
         select(Alert)
         .where(Alert.status != AlertStatus.RESOLVED)
@@ -40,8 +32,24 @@ def seed_civic_demo_data(db: Session) -> None:
 
     rng = Random(2026)
     now = datetime.utcnow()
+    cutoff = now - timedelta(hours=2)
+    created_any = False
 
     for index, alert in enumerate(alerts):
+        # Do not duplicate a demo series if this alert already has recent signals.
+        has_recent = db.scalar(
+            select(Observation.id)
+            .where(
+                Observation.area_id == alert.area_id,
+                Observation.signal_type == "civic_compliance",
+                Observation.category == f"civic:{alert.id}",
+                Observation.created_at >= cutoff,
+            )
+            .limit(1)
+        )
+        if has_recent is not None:
+            continue
+
         target = DEMO_SCORES[index]
 
         # Twelve recent signals per alert make the dashboard immediately useful.
@@ -69,5 +77,7 @@ def seed_civic_demo_data(db: Session) -> None:
                     created_at=created_at,
                 )
             )
+        created_any = True
 
-    db.commit()
+    if created_any:
+        db.commit()
