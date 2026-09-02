@@ -20,6 +20,7 @@ class UserCreate(BaseModel):
     full_name: str
     password: str = Field(min_length=8)
     role: Role = Role.VIEWER
+    provider_type: str = "PUBLIC_CITIZEN"
 
 
 class UserRead(BaseModel):
@@ -29,6 +30,7 @@ class UserRead(BaseModel):
     email: EmailStr
     full_name: str
     role: Role
+    provider_type: str
     is_active: bool
 
 
@@ -245,4 +247,3 @@ class HealthReportRead(BaseModel):
     reported_date: date
     is_public: bool
     created_at: datetime
-
