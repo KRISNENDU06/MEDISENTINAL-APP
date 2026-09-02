@@ -3,10 +3,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import require_roles
+from app.api.deps import require_authenticated_roles
 from app.api.dashboard import invalidate_dashboard_cache
 from app.db.session import get_db
 from app.models.domain import Area, Observation, Role, User
@@ -30,21 +29,16 @@ class ProviderObservationCreate(BaseModel):
 def create_provider_observation(
     payload: ProviderObservationCreate,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL))],
+    current_user: Annotated[User, Depends(require_authenticated_roles(Role.ADMIN, Role.HEALTH_OFFICIAL))],
 ):
     area = db.get(Area, payload.area_id)
     if not area:
         raise HTTPException(status_code=404, detail="Area not found")
 
     provider = current_user.provider_type or "GOVERNMENT_HEALTH_OFFICIAL"
-    source = f"{provider}:{current_user.id}"
+    source = provider
     category = f"disease:{payload.disease.strip().lower()}"
-
-    signals = [
-        ("medicine_demand", payload.medicine_demand),
-        ("fever_cases", payload.fever_cases),
-        ("clinic_visits", payload.clinic_visits),
-    ]
+    signals = [("medicine_demand", payload.medicine_demand), ("fever_cases", payload.fever_cases), ("clinic_visits", payload.clinic_visits)]
     if not any(value > 0 for _, value in signals):
         raise HTTPException(status_code=400, detail="Enter at least one numeric health signal")
 
@@ -52,26 +46,13 @@ def create_provider_observation(
     for signal_type, value in signals:
         if value <= 0:
             continue
-        db.add(Observation(
-            area_id=area.id,
-            observed_on=payload.observed_on,
-            signal_type=signal_type,
-            category=category,
-            value=value,
-            source=source,
-            data_quality_score=payload.data_quality_score,
-        ))
+        db.add(Observation(area_id=area.id, observed_on=payload.observed_on, signal_type=signal_type, category=category, value=value, source=source, data_quality_score=payload.data_quality_score))
         created += 1
 
     db.flush()
     assessments, generated_alerts = RiskEngine(db).run_for_all_areas(payload.observed_on)
     assessment = next((item for item in assessments if item.area_id == area.id), None)
-    log_activity(
-        db,
-        action="PROVIDER_OBSERVATION_CREATED",
-        details=f"{provider} uploaded {created} {payload.disease} signals for {area.name}",
-        user=current_user,
-    )
+    log_activity(db, action="PROVIDER_OBSERVATION_CREATED", details=f"{provider} uploaded {created} {payload.disease} signals for {area.name}", user=current_user)
     db.commit()
     invalidate_dashboard_cache()
 
