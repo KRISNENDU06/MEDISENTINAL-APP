@@ -16,6 +16,7 @@ from app.core.middleware import RateLimitMiddleware, SecurityHeadersMiddleware
 from app.db.init_db import init_db
 from app.db.session import SessionLocal
 from app.services.seed_data import seed_database
+from app.services.civic_demo_data import seed_civic_demo_data
 
 settings = get_settings()
 
@@ -28,6 +29,7 @@ async def lifespan(app: FastAPI):
     db = SessionLocal()
     try:
         seed_database(db)
+        seed_civic_demo_data(db)
     finally:
         db.close()
     yield
