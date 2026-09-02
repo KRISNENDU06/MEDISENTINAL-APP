@@ -1,6 +1,8 @@
-from typing import Annotated
+from datetime import date, datetime, timedelta
+from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -61,6 +63,174 @@ def area_risk(
     latest_by_area = {a.area_id: a for a in _latest_assessments(db)}
     areas = db.scalars(select(Area).order_by(Area.name)).all()
     return [AreaRiskSummary(area=area, assessment=latest_by_area.get(area.id)) for area in areas]
+
+
+class CivicFeedbackCreate(BaseModel):
+    area_id: int = Field(gt=0)
+    alert_id: int = Field(gt=0)
+    response: Literal["FOLLOWING", "NOT_FOLLOWING", "NOT_APPLICABLE"]
+
+
+class CivicSignalCreate(BaseModel):
+    area_id: int = Field(gt=0)
+    alert_id: int = Field(gt=0)
+    score: float = Field(ge=0, le=100)
+    source: str = Field(default="authorized_area_signal", min_length=3, max_length=120)
+    quality: float = Field(default=0.9, ge=0, le=1)
+
+
+def _civic_category(alert_id: int) -> str:
+    return f"civic:{alert_id}"
+
+
+def _civic_score(db: Session, area_id: int, alert_id: int) -> dict:
+    cutoff = datetime.utcnow() - timedelta(hours=2)
+    rows = list(
+        db.scalars(
+            select(Observation)
+            .where(
+                Observation.area_id == area_id,
+                Observation.signal_type == "civic_compliance",
+                Observation.category == _civic_category(alert_id),
+                Observation.created_at >= cutoff,
+            )
+            .order_by(Observation.created_at.desc())
+        ).all()
+    )
+
+    if not rows:
+        return {
+            "score": None,
+            "confidence": 0,
+            "trend": "NO_DATA",
+            "sample_count": 0,
+            "updated_at": None,
+            "status": "INSUFFICIENT_DATA",
+        }
+
+    # Weighted average: source quality controls influence; no response is treated as missing,
+    # never as non-compliance. Citizen feedback is intentionally only one evidence source.
+    numerator = sum(r.value * max(r.data_quality_score, 0.1) for r in rows)
+    denominator = sum(max(r.data_quality_score, 0.1) for r in rows)
+    score = round(numerator / denominator, 1) if denominator else None
+
+    sample_count = len(rows)
+    quality = sum(r.data_quality_score for r in rows) / sample_count
+    volume_confidence = min(sample_count / 20, 1.0)
+    confidence = round(100 * (0.55 * volume_confidence + 0.45 * quality), 1)
+
+    midpoint = datetime.utcnow() - timedelta(hours=1)
+    recent = [r.value for r in rows if r.created_at >= midpoint]
+    older = [r.value for r in rows if r.created_at < midpoint]
+    trend = "STABLE"
+    if recent and older:
+        delta = sum(recent) / len(recent) - sum(older) / len(older)
+        if delta >= 5:
+            trend = "IMPROVING"
+        elif delta <= -5:
+            trend = "DECLINING"
+
+    return {
+        "score": score,
+        "confidence": confidence,
+        "trend": trend,
+        "sample_count": sample_count,
+        "updated_at": max(r.created_at for r in rows),
+        "status": "HIGH" if score is not None and score >= 80 else "MODERATE" if score is not None and score >= 50 else "LOW",
+    }
+
+
+@router.post("/civic/feedback", status_code=201)
+def submit_civic_feedback(payload: CivicFeedbackCreate, db: Session = Depends(get_db)):
+    """Anonymous public feedback. No user identity is stored.
+
+    Non-users can participate through any future public web/QR/SMS client using this endpoint.
+    Missing participation is deliberately not interpreted as non-compliance.
+    """
+    alert = db.get(Alert, payload.alert_id)
+    area = db.get(Area, payload.area_id)
+    if not alert or not area or alert.area_id != payload.area_id:
+        raise HTTPException(status_code=404, detail="Alert or area not found")
+
+    value = {"FOLLOWING": 100.0, "NOT_FOLLOWING": 0.0, "NOT_APPLICABLE": 50.0}[payload.response]
+    # NOT_APPLICABLE is stored with zero quality so it contributes no compliance evidence.
+    quality = 0.8 if payload.response != "NOT_APPLICABLE" else 0.0
+    observation = Observation(
+        area_id=payload.area_id,
+        observed_on=date.today(),
+        signal_type="civic_compliance",
+        category=_civic_category(payload.alert_id),
+        value=value,
+        source="anonymous_citizen_feedback",
+        data_quality_score=quality,
+    )
+    db.add(observation)
+    db.commit()
+    return {"accepted": True, "message": "Anonymous civic signal recorded", "rating": _civic_score(db, payload.area_id, payload.alert_id)}
+
+
+@router.post("/civic/signal", status_code=201)
+def submit_civic_signal(
+    payload: CivicSignalCreate,
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL))],
+):
+    """Ingest an aggregated/authorized area-level compliance signal."""
+    alert = db.get(Alert, payload.alert_id)
+    area = db.get(Area, payload.area_id)
+    if not alert or not area or alert.area_id != payload.area_id:
+        raise HTTPException(status_code=404, detail="Alert or area not found")
+    observation = Observation(
+        area_id=payload.area_id,
+        observed_on=date.today(),
+        signal_type="civic_compliance",
+        category=_civic_category(payload.alert_id),
+        value=payload.score,
+        source=payload.source,
+        data_quality_score=payload.quality,
+    )
+    db.add(observation)
+    db.commit()
+    return {"accepted": True, "rating": _civic_score(db, payload.area_id, payload.alert_id)}
+
+
+@router.get("/civic/rating")
+def civic_rating(
+    area_id: int,
+    alert_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL, Role.VIEWER))],
+):
+    area = db.get(Area, area_id)
+    alert = db.get(Alert, alert_id)
+    if not area or not alert or alert.area_id != area_id:
+        raise HTTPException(status_code=404, detail="Alert or area not found")
+    return {"area_id": area_id, "area_name": area.name, "alert_id": alert_id, "alert_title": alert.title, **_civic_score(db, area_id, alert_id)}
+
+
+@router.get("/civic/overview")
+def civic_overview(
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[User, Depends(require_roles(Role.ADMIN, Role.HEALTH_OFFICIAL, Role.VIEWER))],
+):
+    """Return the latest civic rating for each area/active alert pair with data.
+
+    This is intentionally based only on available signals; non-participation is not counted as a no.
+    """
+    active_alerts = db.scalars(select(Alert).where(Alert.status != AlertStatus.RESOLVED).order_by(Alert.created_at.desc())).all()
+    seen: set[tuple[int, int]] = set()
+    result = []
+    for alert in active_alerts:
+        key = (alert.area_id, alert.id)
+        if key in seen:
+            continue
+        seen.add(key)
+        area = db.get(Area, alert.area_id)
+        if not area:
+            continue
+        rating = _civic_score(db, alert.area_id, alert.id)
+        result.append({"area_id": area.id, "area_name": area.name, "district": area.district, "alert_id": alert.id, "alert_title": alert.title, **rating})
+    return result
 
 
 def _latest_assessments(db: Session) -> list[RiskAssessment]:
