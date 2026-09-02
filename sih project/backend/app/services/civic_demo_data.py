@@ -14,6 +14,7 @@ DEMO_SCORES = [86, 78, 91, 67, 83, 72]
 DEMO_SOURCES = [
     "Anonymous Public Feedback",
     "Municipal Field Survey",
+    "Community Health Action Aggregate",
     "Traffic/IoT Aggregated Signal",
 ]
 
@@ -52,18 +53,17 @@ def seed_civic_demo_data(db: Session) -> None:
 
         target = DEMO_SCORES[index]
 
-        # Twelve recent signals per alert make the dashboard immediately useful.
-        # The first half is slightly lower than the second half so the UI can
-        # demonstrate a meaningful IMPROVING trend without claiming real-world data.
-        for signal_index in range(12):
-            if signal_index < 6:
+        # Four evidence groups: citizen pulse, behavior adherence, health action,
+        # and advisory impact. Values are synthetic and deliberately area-level.
+        for signal_index in range(16):
+            if signal_index < 8:
                 baseline = target - 5
             else:
                 baseline = target + 3
 
             value = max(0, min(100, baseline + rng.uniform(-4, 4)))
             quality = 0.82 + rng.uniform(0.08, 0.16)
-            created_at = now - timedelta(minutes=(70 - signal_index * 5))
+            created_at = now - timedelta(minutes=(75 - signal_index * 4))
 
             db.add(
                 Observation(
