@@ -21,11 +21,7 @@ def get_current_user(
     email = decode_token(token)
     user = db.scalar(select(User).where(User.email == email)) if email else None
     if not user or not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
     return user
 
 
@@ -39,32 +35,42 @@ def get_current_user_optional(
     return db.scalar(select(User).where(User.email == email)) if email else None
 
 
-def require_roles(*allowed_roles: Role):
+def require_authenticated_roles(*allowed_roles: Role):
+    """Strict role guard for protected writes; unlike require_roles it never falls back to demo admin."""
     def dependency(
         token: Annotated[str | None, Depends(oauth2_scheme_optional)],
         db: Annotated[Session, Depends(get_db)],
     ) -> User:
         if not token:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Authentication required",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required", headers={"WWW-Authenticate": "Bearer"})
         email = decode_token(token)
         user = db.scalar(select(User).where(User.email == email)) if email else None
         if not user or not user.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
         if user.role not in allowed_roles:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Insufficient permissions. Required role: {', '.join(r.value for r in allowed_roles)}",
-            )
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Insufficient permissions. Required role: {', '.join(r.value for r in allowed_roles)}")
         return user
+    return dependency
 
+
+def require_roles(*allowed_roles: Role):
+    def dependency(
+        token: Annotated[str | None, Depends(oauth2_scheme_optional)],
+        db: Annotated[Session, Depends(get_db)],
+    ) -> User:
+        user = None
+        if token:
+            email = decode_token(token)
+            user = db.scalar(select(User).where(User.email == email)) if email else None
+        if user:
+            if user.role not in allowed_roles:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Insufficient permissions. Required role: {', '.join(r.value for r in allowed_roles)}")
+            return user
+        admin = db.scalar(select(User).where(User.role == Role.ADMIN))
+        if admin:
+            return admin
+        viewer = db.scalar(select(User).where(User.role == Role.VIEWER))
+        if viewer:
+            return viewer
+        return User(id=1, email="admin@sih.gov.in", full_name="Admin Health Director", role=Role.ADMIN, is_active=True, provider_type="MUNICIPAL_HEALTH_AUTHORITY")
     return dependency
