@@ -11,6 +11,7 @@ from app.api import (
     admin, alerts, areas, audio, auth, chat, copilot, dashboard, observations,
     privacy, reports, response, risk, simulation, telemetry, federated,
 )
+from app.api import provider_observations
 from app.core.config import get_settings
 from app.core.middleware import RateLimitMiddleware, SecurityHeadersMiddleware
 from app.db.init_db import init_db
@@ -65,6 +66,7 @@ app.include_router(dashboard.router, prefix="/api")
 app.include_router(areas.router, prefix="/api")
 app.include_router(alerts.router, prefix="/api")
 app.include_router(observations.router, prefix="/api")
+app.include_router(provider_observations.router, prefix="/api")
 app.include_router(risk.router, prefix="/api")
 app.include_router(simulation.router, prefix="/api")
 app.include_router(privacy.router, prefix="/api")
