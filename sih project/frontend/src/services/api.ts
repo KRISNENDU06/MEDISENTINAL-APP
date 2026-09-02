@@ -54,6 +54,7 @@ export interface AlertItem { id:number|string; areaId:string; areaName:string; s
 export interface WhatIfRequest { medicineDemandSpike:number; feverCasesSpike:number; clinicVisitsSpike:number; geographicSpread:number; persistenceWeeks:number; archetype:string; intervention:string; r0?:number; }
 export interface WhatIfResult { riskScore:number; riskLevel:'LOW'|'MEDIUM'|'HIGH'; confidence:number; effectiveRt:number; archetype:any; intervention:any; factorScores:FactorScores; signals:AreaSignals; explanation:string; recommendedAction:string; timeline:TimelinePoint[]; }
 export interface ObservationInput { area_name?:string; district?:string; observed_on:string; signal_type:string; category?:string; value:number; source?:string; data_quality_score?:number; latitude?:number; longitude?:number; state?:string; area_id?:number; custom_area_name?:string; custom_district?:string; }
+export interface CivicRating { area_id:number; area_name:string; district?:string; alert_id:number; alert_title:string; score:number|null; confidence:number; trend:'IMPROVING'|'DECLINING'|'STABLE'|'NO_DATA'; sample_count:number; updated_at:string|null; status:'HIGH'|'MODERATE'|'LOW'|'INSUFFICIENT_DATA'; }
 
 export const api = {
   login:(email:string,password:string)=>request<any>('/api/auth/login',{method:'POST',body:JSON.stringify({email,password})}),
@@ -89,6 +90,9 @@ export const api = {
   shutdownSystem:()=>request<any>('/api/auth/shutdown',{method:'POST'}),
   getFederatedNodes:()=>request<FederatedNetworkResponse>('/api/federated/nodes'),
   runFederatedRound:()=>request<any>('/api/federated/simulate-round',{method:'POST'}),
+  getCivicOverview:()=>request<CivicRating[]>('/api/dashboard/civic/overview'),
+  getCivicRating:(areaId:number,alertId:number)=>request<CivicRating>(`/api/dashboard/civic/rating?area_id=${areaId}&alert_id=${alertId}`),
+  submitCivicFeedback:(areaId:number,alertId:number,response:'FOLLOWING'|'NOT_FOLLOWING'|'NOT_APPLICABLE')=>request<any>('/api/dashboard/civic/feedback',{method:'POST',body:JSON.stringify({area_id:areaId,alert_id:alertId,response})}),
 };
 
 export interface HealthReport { id:number; area_id:number; area_name:string; district:string; officer_id?:number; officer_name:string; officer_designation:string; report_title:string; observed_signals:string; risk_level:'LOW'|'MEDIUM'|'HIGH'; clinical_notes:string; recommendations:string; reported_date:string; is_public:boolean; created_at:string; }
