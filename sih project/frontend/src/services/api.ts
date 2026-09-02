@@ -21,29 +21,11 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   return text.trim() ? JSON.parse(text) as T : {} as T;
 }
 
-export interface FederatedNode {
-  node_id: string;
-  name: string;
-  type: string;
-  location: string;
-  status: 'CONNECTED' | 'DELAYED' | 'OFFLINE' | string;
-  last_sync: string;
-  signals_sent: number;
-  raw_records_shared: number;
-  privacy: string;
-}
-
-export interface FederatedNetworkResponse {
-  nodes: FederatedNode[];
-  total_nodes: number;
-  connected_nodes: number;
-  raw_records_shared: number;
-  privacy_enabled: boolean;
-}
-
-export interface TokenResponse { access_token: string; refresh_token?: string; token_type?: string; }
-export interface User { id: number; email: string; full_name: string; role: 'ADMIN' | 'HEALTH_OFFICIAL' | 'VIEWER'; is_active: boolean; }
-export interface DashboardSummary { overall_risk_score: number; overall_risk_level: 'LOW'|'MEDIUM'|'HIGH'; average_confidence: number; active_alerts: number; areas_monitored: number; signals_processed: number; high_risk_areas: number; medium_risk_areas: number; low_risk_areas: number; last_updated: string|null; }
+export interface FederatedNode { node_id:string; name:string; type:string; location:string; status:'CONNECTED'|'DELAYED'|'OFFLINE'|string; last_sync:string; signals_sent:number; raw_records_shared:number; privacy:string; }
+export interface FederatedNetworkResponse { nodes:FederatedNode[]; total_nodes:number; connected_nodes:number; raw_records_shared:number; privacy_enabled:boolean; }
+export interface TokenResponse { access_token:string; refresh_token?:string; token_type?:string; }
+export interface User { id:number; email:string; full_name:string; role:'ADMIN'|'HEALTH_OFFICIAL'|'VIEWER'; is_active:boolean; }
+export interface DashboardSummary { overall_risk_score:number; overall_risk_level:'LOW'|'MEDIUM'|'HIGH'; average_confidence:number; active_alerts:number; areas_monitored:number; signals_processed:number; high_risk_areas:number; medium_risk_areas:number; low_risk_areas:number; last_updated:string|null; }
 export interface SignalData { current:number; baseline:number; deviation:string; }
 export interface AreaSignals { medicineDemand:SignalData; feverIndicators:SignalData; clinicVisits:SignalData; geographicSpread:{affectedNeighbors:number; totalNeighbors:number; deviation:string}; }
 export interface FactorScores { medicine:number; healthIndicators:number; persistence:number; geographicSpread:number; }
@@ -54,7 +36,8 @@ export interface AlertItem { id:number|string; areaId:string; areaName:string; s
 export interface WhatIfRequest { medicineDemandSpike:number; feverCasesSpike:number; clinicVisitsSpike:number; geographicSpread:number; persistenceWeeks:number; archetype:string; intervention:string; r0?:number; }
 export interface WhatIfResult { riskScore:number; riskLevel:'LOW'|'MEDIUM'|'HIGH'; confidence:number; effectiveRt:number; archetype:any; intervention:any; factorScores:FactorScores; signals:AreaSignals; explanation:string; recommendedAction:string; timeline:TimelinePoint[]; }
 export interface ObservationInput { area_name?:string; district?:string; observed_on:string; signal_type:string; category?:string; value:number; source?:string; data_quality_score?:number; latitude?:number; longitude?:number; state?:string; area_id?:number; custom_area_name?:string; custom_district?:string; }
-export interface CivicRating { area_id:number; area_name:string; district?:string; alert_id:number; alert_title:string; score:number|null; confidence:number; trend:'IMPROVING'|'DECLINING'|'STABLE'|'NO_DATA'; sample_count:number; updated_at:string|null; status:'HIGH'|'MODERATE'|'LOW'|'INSUFFICIENT_DATA'; }
+export interface CivicIndicator { score:number|null; weight:number; samples:number; }
+export interface CivicRating { area_id:number; area_name:string; district?:string; alert_id:number; alert_title:string; score:number|null; confidence:number; trend:'IMPROVING'|'DECLINING'|'STABLE'|'NO_DATA'; sample_count:number; updated_at:string|null; status:'HIGH'|'MODERATE'|'LOW'|'INSUFFICIENT_DATA'; indicators?:{ citizen_pulse:CivicIndicator; behavior_adherence:CivicIndicator; health_action:CivicIndicator; advisory_impact:CivicIndicator; }; }
 
 export const api = {
   login:(email:string,password:string)=>request<any>('/api/auth/login',{method:'POST',body:JSON.stringify({email,password})}),
@@ -79,7 +62,7 @@ export const api = {
   getFacilities:(district?:string,type?:string)=>{const p=new URLSearchParams();if(district)p.append('district',district);if(type)p.append('facility_type',type);return request<any[]>(`/api/areas/facilities?${p}`)},
   submitCommunityReport:(payload:any)=>request<any>('/api/observations/community-report',{method:'POST',body:JSON.stringify(payload)}),
   generateAdvisory:(payload:any)=>request<any>('/api/response/generate-advisory',{method:'POST',body:JSON.stringify(payload)}),
-  getHealthReports:(areaId?:number,riskLevel?:string)=>{const p=new URLSearchParams();if(areaId)p.append('area_id',String(areaId));if(riskLevel)p.append('risk_level',riskLevel);return request<any[]>(`/api/reports?${p}`)},
+  getHealthReports:(areaId?:number,riskLevel?:string)=>{const p=new URLSearchParams();if(areaId)p.append('area_id',String(areaId));if(riskLevel)p.append('risk_level',String(riskLevel));return request<any[]>(`/api/reports?${p}`)},
   createHealthReport:(payload:any)=>request<any>('/api/reports',{method:'POST',body:JSON.stringify(payload)}),
   deleteHealthReport:(id:number)=>request<void>(`/api/reports/${id}`,{method:'DELETE'}),
   getAudioTTSUrl:(lang:string,text?:string)=>{const p=new URLSearchParams({lang});if(text?.trim())p.set('text',text.trim());return `${API_BASE}/api/audio/tts?${p}`},
@@ -92,7 +75,7 @@ export const api = {
   runFederatedRound:()=>request<any>('/api/federated/simulate-round',{method:'POST'}),
   getCivicOverview:()=>request<CivicRating[]>('/api/dashboard/civic/overview'),
   getCivicRating:(areaId:number,alertId:number)=>request<CivicRating>(`/api/dashboard/civic/rating?area_id=${areaId}&alert_id=${alertId}`),
-  submitCivicFeedback:(areaId:number,alertId:number,response:'FOLLOWING'|'NOT_FOLLOWING'|'NOT_APPLICABLE')=>request<any>('/api/dashboard/civic/feedback',{method:'POST',body:JSON.stringify({area_id:areaId,alert_id:alertId,response})}),
+  submitCivicFeedback:(areaId:number,alertId:number,response:'EXCELLENT'|'GOOD'|'MIXED'|'POOR'|'NOT_APPLICABLE')=>request<any>('/api/dashboard/civic/feedback',{method:'POST',body:JSON.stringify({area_id:areaId,alert_id:alertId,response})}),
 };
 
 export interface HealthReport { id:number; area_id:number; area_name:string; district:string; officer_id?:number; officer_name:string; officer_designation:string; report_title:string; observed_signals:string; risk_level:'LOW'|'MEDIUM'|'HIGH'; clinical_notes:string; recommendations:string; reported_date:string; is_public:boolean; created_at:string; }
